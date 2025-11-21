@@ -4,9 +4,20 @@
   "private": true,
   "scripts": {
     "prepare": "husky install",
-    "check-commit": "node scripts/check-commit-type.js"
+    "check-commit": "node scripts/check-commit-type.js",
+    "lint": "eslint --no-error-on-unmatched-pattern --ext .js,.jsx,.ts,.tsx frontend backend",
+    "lint:fix": "npm run lint -- --fix"
   },
   "devDependencies": {
-    "husky": "^9.0.11"
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-n": "^17.0.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^9.0.11",
+    "typescript": "^5.3.3"
   }
 }
