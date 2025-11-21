@@ -1,0 +1,12 @@
+{
+  "name": "mia",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install",
+    "check-commit": "node scripts/check-commit-type.js"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11"
+  }
+}

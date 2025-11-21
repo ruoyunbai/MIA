@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+if [ "$HUSKY" = "0" ]; then
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+node "$REPO_ROOT/scripts/check-commit-type.js" "$1"
