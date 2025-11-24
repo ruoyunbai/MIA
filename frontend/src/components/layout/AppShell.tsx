@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { MessageSquare, Database, BarChart3, LogIn, LogOut, Menu, X } from 'lucide-react';
 import styles from '../../App.module.css';
 import type { User } from '../../store/useStore';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const NAV_ITEMS = [
   { id: 'chat', label: '智能问答', icon: MessageSquare },
@@ -29,22 +30,8 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window === 'undefined' ? false : window.matchMedia('(max-width: 767px)').matches,
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(max-width: 767px)');
-    const handleChange = () => setIsMobile(mediaQuery.matches);
-    handleChange();
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
-  }, []);
+  // 使用 1025px 作为断点，与 CSS 中的 @media (max-width: 1024px) 保持一致
+  const isMobile = useIsMobile(1025);
 
   useEffect(() => {
     if (!isMobile) {

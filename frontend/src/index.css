@@ -18,6 +18,19 @@
   --color-success: #16a34a;
   --color-warning: #f97316;
   --color-danger: #dc2626;
+
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Safe Area Insets */
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-right: env(safe-area-inset-right);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
 }
 
 *,
@@ -31,6 +44,12 @@ body {
   min-height: 100vh;
   background: var(--color-surface-muted);
   color: #0f172a;
+  /* Mobile optimization */
+  -webkit-tap-highlight-color: transparent;
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
 }
 
 img,
