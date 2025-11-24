@@ -10,6 +10,9 @@
 
 .searchInput {
   composes: input from '../KnowledgeBase.module.css';
+}
+
+input.searchInput {
   padding-left: 2.5rem;
 }
 
@@ -32,6 +35,10 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+.select.selectWithIcon {
+  padding-left: 2.5rem;
 }
 
 @media (max-width: 768px) {

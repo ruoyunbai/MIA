@@ -48,7 +48,7 @@ export function KnowledgeFilterBar({
             <Filter className={styles.searchIcon} size={16} />
             <select
               id="filter-category"
-              className={styles.select}
+              className={`${styles.select} ${styles.selectWithIcon}`}
               value={filterCategory}
               onChange={(e) => {
                 onFilterCategoryChange(e.target.value);
@@ -73,7 +73,7 @@ export function KnowledgeFilterBar({
             <Tag className={styles.searchIcon} size={16} />
             <select
               id="filter-sub"
-              className={styles.select}
+              className={`${styles.select} ${styles.selectWithIcon}`}
               value={filterSubCategory}
               onChange={(e) => onFilterSubCategoryChange(e.target.value)}
               disabled={filterCategory === "all"}
