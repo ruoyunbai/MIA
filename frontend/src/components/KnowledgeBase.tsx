@@ -8,29 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-
-interface Document {
-  id: string;
-  title: string;
-  category: string;
-  subCategory: string;
-  status: 'active' | 'inactive';
-  uploadDate: Date;
-  content: string;
-  fileType?: 'text' | 'pdf';
-  fileUrl?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  subCategories: SubCategory[];
-}
-
-interface SubCategory {
-  id: string;
-  name: string;
-}
+import { useStore, type Document, type Category, type SubCategory } from '../store/useStore';
 
 interface KnowledgeBaseProps {
   onOpenEditor: (state: {
@@ -45,83 +23,17 @@ interface KnowledgeBaseProps {
 }
 
 export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: '1',
-      name: '招商入驻',
-      subCategories: [
-        { id: '1-1', name: '入驻与退出' },
-        { id: '1-2', name: '资质管理' },
-        { id: '1-3', name: '保证金管理' },
-      ],
-    },
-    {
-      id: '2',
-      name: '商品管理',
-      subCategories: [
-        { id: '2-1', name: '商品发布' },
-        { id: '2-2', name: '商品审核' },
-        { id: '2-3', name: '评价管理' },
-      ],
-    },
-    {
-      id: '3',
-      name: '管理总则',
-      subCategories: [
-        { id: '3-1', name: '经营规范' },
-        { id: '3-2', name: '违规处罚' },
-        { id: '3-3', name: '申诉流程' },
-      ],
-    },
-    {
-      id: '4',
-      name: '商家服务',
-      subCategories: [
-        { id: '4-1', name: '售后管理' },
-        { id: '4-2', name: '物流管理' },
-        { id: '4-3', name: '客服规范' },
-      ],
-    },
-  ]);
-
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: '1',
-      title: '评价管理规则',
-      category: '商品管理',
-      subCategory: '评价管理',
-      status: 'active',
-      uploadDate: new Date('2024-11-15'),
-      content: '商家可针对违规评价内容提起申诉，包括但不限于：辱骂、广告推广、无关内容...',
-    },
-    {
-      id: '2',
-      title: '商家经营规范总则',
-      category: '管理总则',
-      subCategory: '经营规范',
-      status: 'active',
-      uploadDate: new Date('2024-11-10'),
-      content: '商家应遵守诚信经营原则，确保商品信息真实准确，按时发货...',
-    },
-    {
-      id: '3',
-      title: '禁售商品管理规则',
-      category: '商品管理',
-      subCategory: '商品发布',
-      status: 'active',
-      uploadDate: new Date('2024-11-01'),
-      content: '平台禁止销售假冒伪劣、侵权、违法违规商品...',
-    },
-    {
-      id: '4',
-      title: '入驻规则（2023版）',
-      category: '招商入驻',
-      subCategory: '入驻与退出',
-      status: 'inactive',
-      uploadDate: new Date('2023-06-01'),
-      content: '商家入驻需提交营业执照、品牌授权等资质材料...',
-    },
-  ]);
+  const {
+    documents,
+    categories,
+    setDocuments,
+    addDocument,
+    updateDocument,
+    deleteDocument: removeDocument,
+    addCategory,
+    updateCategory,
+    deleteCategory: removeCategory,
+  } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -148,16 +60,16 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doc.content.toLowerCase().includes(searchQuery.toLowerCase());
+      doc.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'all' || doc.category === filterCategory;
     const matchesSubCategory = filterSubCategory === 'all' || doc.subCategory === filterSubCategory;
     const matchesStatus = filterStatus === 'all' || doc.status === filterStatus;
-    
+
     return matchesSearch && matchesCategory && matchesSubCategory && matchesStatus;
   });
 
-  const availableSubCategories = filterCategory === 'all' 
-    ? [] 
+  const availableSubCategories = filterCategory === 'all'
+    ? []
     : categories.find(c => c.name === filterCategory)?.subCategories || [];
 
   const handleAddCategory = () => {
@@ -167,7 +79,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       name: newCategoryName,
       subCategories: [],
     };
-    setCategories([...categories, newCategory]);
+    addCategory(newCategory);
     setNewCategoryName('');
     setIsAddCategoryDialogOpen(false);
   };
@@ -180,16 +92,18 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
 
   const handleUpdateCategory = () => {
     if (!editingCategory || !newCategoryName.trim()) return;
-    setCategories(categories.map(cat =>
-      cat.id === editingCategory.id
-        ? { ...cat, name: newCategoryName }
-        : cat
-    ));
-    setDocuments(documents.map(doc =>
+    updateCategory(editingCategory.id, { name: newCategoryName });
+
+    // Also update documents that use this category
+    // Note: In a real app with relational DB, this might be handled differently
+    // Here we manually update documents for consistency in the UI
+    const updatedDocs = documents.map(doc =>
       doc.category === editingCategory.name
         ? { ...doc, category: newCategoryName }
         : doc
-    ));
+    );
+    setDocuments(updatedDocs);
+
     setEditingCategory(null);
     setNewCategoryName('');
     setIsAddCategoryDialogOpen(false);
@@ -204,7 +118,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       return;
     }
     if (confirm(`确定要删除业务分类"${category.name}"吗？`)) {
-      setCategories(categories.filter(cat => cat.id !== categoryId));
+      removeCategory(categoryId);
     }
   };
 
@@ -214,11 +128,13 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       id: `${selectedCategoryForSub.id}-${Date.now()}`,
       name: newSubCategoryName,
     };
-    setCategories(categories.map(cat =>
-      cat.id === selectedCategoryForSub.id
-        ? { ...cat, subCategories: [...cat.subCategories, newSubCategory] }
-        : cat
-    ));
+
+    const updatedCategory = {
+      ...selectedCategoryForSub,
+      subCategories: [...selectedCategoryForSub.subCategories, newSubCategory]
+    };
+    updateCategory(selectedCategoryForSub.id, updatedCategory);
+
     setNewSubCategoryName('');
     setSelectedCategoryForSub(null);
     setIsAddSubCategoryDialogOpen(false);
@@ -234,23 +150,23 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
   const handleUpdateSubCategory = () => {
     if (!editingSubCategory || !newSubCategoryName.trim()) return;
     const { category, subCategory } = editingSubCategory;
-    setCategories(categories.map(cat =>
-      cat.id === category.id
-        ? {
-            ...cat,
-            subCategories: cat.subCategories.map(sub =>
-              sub.id === subCategory.id
-                ? { ...sub, name: newSubCategoryName }
-                : sub
-            ),
-          }
-        : cat
-    ));
-    setDocuments(documents.map(doc =>
+
+    const updatedSubCategories = category.subCategories.map(sub =>
+      sub.id === subCategory.id
+        ? { ...sub, name: newSubCategoryName }
+        : sub
+    );
+
+    updateCategory(category.id, { subCategories: updatedSubCategories });
+
+    // Update documents
+    const updatedDocs = documents.map(doc =>
       doc.category === category.name && doc.subCategory === subCategory.name
         ? { ...doc, subCategory: newSubCategoryName }
         : doc
-    ));
+    );
+    setDocuments(updatedDocs);
+
     setEditingSubCategory(null);
     setNewSubCategoryName('');
     setSelectedCategoryForSub(null);
@@ -269,11 +185,8 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       return;
     }
     if (confirm(`确定要删除场景分类"${subCategory.name}"吗？`)) {
-      setCategories(categories.map(cat =>
-        cat.id === categoryId
-          ? { ...cat, subCategories: cat.subCategories.filter(sub => sub.id !== subCategoryId) }
-          : cat
-      ));
+      const updatedSubCategories = category.subCategories.filter(sub => sub.id !== subCategoryId);
+      updateCategory(categoryId, { subCategories: updatedSubCategories });
     }
   };
 
@@ -282,7 +195,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       alert('请填写完整的文档信息');
       return;
     }
-    
+
     if (inputMethod === 'richtext') {
       setIsAddDialogOpen(false);
       onOpenEditor({
@@ -303,7 +216,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
             content: content,
             fileType: 'text',
           };
-          setDocuments([document, ...documents]);
+          addDocument(document);
           setNewDoc({ title: '', category: '', subCategory: '', content: '', status: 'active', fileType: 'text' });
           setInputMethod('richtext');
         }
@@ -325,7 +238,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       content: newDoc.content,
       fileType: inputMethod === 'pdf' ? 'pdf' : 'text',
     };
-    setDocuments([document, ...documents]);
+    addDocument(document);
     setNewDoc({ title: '', category: '', subCategory: '', content: '', status: 'active', fileType: 'text' });
     setInputMethod('richtext');
     setIsAddDialogOpen(false);
@@ -335,24 +248,23 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
     const file = e.target.files?.[0];
     if (file) {
       const fileName = file.name;
-      setNewDoc({ 
-        ...newDoc, 
+      setNewDoc({
+        ...newDoc,
         content: `已上传文件: ${fileName}`,
       });
     }
   };
 
   const toggleStatus = (id: string) => {
-    setDocuments(documents.map(doc =>
-      doc.id === id
-        ? { ...doc, status: doc.status === 'active' ? 'inactive' : 'active' }
-        : doc
-    ));
+    const doc = documents.find(d => d.id === id);
+    if (doc) {
+      updateDocument(id, { status: doc.status === 'active' ? 'inactive' : 'active' });
+    }
   };
 
   const deleteDocument = (id: string) => {
     if (confirm('确定要删除这个文档吗？')) {
-      setDocuments(documents.filter(doc => doc.id !== id));
+      removeDocument(id);
     }
   };
 
@@ -379,7 +291,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                 <h2 className="text-gray-900 mb-1">知识库管理</h2>
                 <p className="text-sm text-gray-500">管理所有业务知识文档，支持分类、上传和状态控制</p>
               </div>
-              
+
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -394,29 +306,27 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                       选择录入方式：富文本编辑或上传PDF
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <div className="space-y-4 mt-4 overflow-y-auto pr-2">
                     <div>
                       <Label className="text-sm text-gray-700 mb-3 block">录入方式</Label>
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setInputMethod('richtext')}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            inputMethod === 'richtext'
+                          className={`p-4 rounded-lg border-2 transition-all ${inputMethod === 'richtext'
                               ? 'border-blue-500 bg-blue-50'
                               : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                            }`}
                         >
                           <FileText className="w-6 h-6 mx-auto mb-2 text-blue-500" />
                           <p className="text-sm text-gray-900">富文本编辑</p>
                         </button>
                         <button
                           onClick={() => setInputMethod('pdf')}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            inputMethod === 'pdf'
+                          className={`p-4 rounded-lg border-2 transition-all ${inputMethod === 'pdf'
                               ? 'border-purple-500 bg-purple-50'
                               : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                            }`}
                         >
                           <Upload className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                           <p className="text-sm text-gray-900">上传PDF</p>
@@ -432,7 +342,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                         onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-sm text-gray-700 mb-2 block">业务分类</Label>
@@ -449,7 +359,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div>
                         <Label className="text-sm text-gray-700 mb-2 block">场景分类</Label>
                         <Select
@@ -470,7 +380,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                         </Select>
                       </div>
                     </div>
-                    
+
                     {inputMethod === 'pdf' && (
                       <div>
                         <Label className="text-sm text-gray-700 mb-2 block">上传PDF文件</Label>
@@ -495,7 +405,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                         </div>
                       </div>
                     )}
-                    
+
                     <div>
                       <Label className="text-sm text-gray-700 mb-2 block">文档状态</Label>
                       <RadioGroup
@@ -520,13 +430,13 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
                       <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                         取消
                       </Button>
-                      <Button 
-                        onClick={handleProceedToEditor} 
+                      <Button
+                        onClick={handleProceedToEditor}
                         disabled={!newDoc.title || !newDoc.category || !newDoc.subCategory || (inputMethod === 'pdf' && !newDoc.content)}
                       >
                         {inputMethod === 'richtext' ? '下一步' : '保存'}
@@ -547,7 +457,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              
+
               <Select value={filterCategory} onValueChange={(value) => {
                 setFilterCategory(value);
                 setFilterSubCategory('all');
@@ -566,8 +476,8 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                 </SelectContent>
               </Select>
 
-              <Select 
-                value={filterSubCategory} 
+              <Select
+                value={filterSubCategory}
                 onValueChange={setFilterSubCategory}
                 disabled={filterCategory === 'all'}
               >
@@ -584,7 +494,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="状态" />
@@ -682,7 +592,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                   ))}
                 </tbody>
               </table>
-              
+
               {filteredDocuments.length === 0 && (
                 <div className="py-12 text-center">
                   <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -713,7 +623,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                 <h2 className="text-gray-900 mb-1">分类管理</h2>
                 <p className="text-sm text-gray-500">管理业务分类和场景分类的两级结构</p>
               </div>
-              
+
               <Button onClick={() => {
                 setEditingCategory(null);
                 setNewCategoryName('');
@@ -737,7 +647,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                         <p className="text-sm text-gray-500">{category.subCategories.length} 个场景分类</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -780,7 +690,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                             <Tag className="w-4 h-4 text-gray-400" />
                             <span className="text-sm text-gray-900">{subCat.name}</span>
                           </div>
-                          
+
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
@@ -829,7 +739,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
               {editingCategory ? '修改业务分类名称' : '创建新的业务分类'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 mt-4">
             <div>
               <Label className="text-sm text-gray-700 mb-2 block">分类名称</Label>
@@ -839,7 +749,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                 onChange={(e) => setNewCategoryName(e.target.value)}
               />
             </div>
-            
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => {
                 setIsAddCategoryDialogOpen(false);
@@ -876,7 +786,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                 : `为"${selectedCategoryForSub?.name}"添加场景分类`}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 mt-4">
             <div>
               <Label className="text-sm text-gray-700 mb-2 block">场景名称</Label>
@@ -886,7 +796,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
                 onChange={(e) => setNewSubCategoryName(e.target.value)}
               />
             </div>
-            
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => {
                 setIsAddSubCategoryDialogOpen(false);

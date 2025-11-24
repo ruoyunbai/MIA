@@ -6,11 +6,7 @@ import { RichTextEditor } from './components/RichTextEditor';
 import { AuthModal } from './components/AuthModal';
 import { MessageSquare, Database, BarChart3, LogIn, LogOut, Menu, X } from 'lucide-react';
 import { Button } from './components/ui/button';
-
-interface User {
-  email: string;
-  name: string;
-}
+import { useStore, type User } from './store/useStore';
 
 const NAV_ITEMS = [
   { id: 'chat', label: '智能问答', icon: MessageSquare },
@@ -22,7 +18,7 @@ type TabId = (typeof NAV_ITEMS)[number]['id'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('chat');
-  const [user, setUser] = useState<User | null>(null);
+  const { user, setUser } = useStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
@@ -31,7 +27,7 @@ export default function App() {
     }
     return window.matchMedia('(max-width: 767px)').matches;
   });
-  
+
   const [editorState, setEditorState] = useState<{
     isOpen: boolean;
     title: string;
@@ -58,10 +54,9 @@ export default function App() {
   };
 
   const navButtonClasses = (tab: TabId, extraClasses = '') =>
-    `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${extraClasses} ${
-      activeTab === tab
-        ? 'bg-blue-500 text-white'
-        : 'text-gray-600 hover:bg-gray-100'
+    `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${extraClasses} ${activeTab === tab
+      ? 'bg-blue-500 text-white'
+      : 'text-gray-600 hover:bg-gray-100'
     }`;
 
   useEffect(() => {

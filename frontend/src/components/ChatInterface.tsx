@@ -10,65 +10,19 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { Resizable } from 're-resizable';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: Array<{
-    title: string;
-    category: string;
-    snippet: string;
-    content?: string;
-  }>;
-  timestamp: Date;
-}
-
-interface Conversation {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: Date;
-}
+import { useStore, type Message, type Conversation } from '../store/useStore';
 
 export function ChatInterface() {
-  const [conversations, setConversations] = useState<Conversation[]>([
-    {
-      id: '1',
-      title: '差评处理流程咨询',
-      messages: [
-        {
-          id: '1',
-          role: 'user',
-          content: '差评如何申诉？',
-          timestamp: new Date(Date.now() - 3600000),
-        },
-        {
-          id: '2',
-          role: 'assistant',
-          content: '根据抖音电商规则，商家可以通过以下步骤申诉差评：\\n\\n1. **申诉入口**：进入\"订单管理\" > \"评价管理\"，找到需要申诉的差评\\n2. **申诉条件**：差评内容包含辱骂、广告、无关内容等违规情况\\n3. **申诉流程**：点击\"申诉\"按钮，选择申诉理由，上传相关证明材料\\n4. **审核时效**：平台会在3个工作日内完成审核\\n\\n注意：正常的负面评价（如质量问题、物流问题等真实反馈）不支持申诉删除。',
-          sources: [
-            {
-              title: '评价管理规则',
-              category: '商品管理 > 评价管理',
-              snippet: '商家可针对违规评价内容提起申诉，包括但不限于：辱骂、广告推广、无关内容...',
-              content: '# 评价管理规则\\n\\n## 一、总则\\n\\n商家可针对违规评价内容提起申诉。本规则适用于所有在平台上经营的商家。\\n\\n## 二、申诉条件\\n\\n商家可以对以下类型的评价提起申诉：\\n\\n1. **辱骂类评价**：包含人身攻击、侮辱性语言的评价\\n2. **广告推广**：评价中包含其他商家或平台的推广信息\\n3. **无关内容**：与商品或服务完全无关的评价内容\\n4. **恶意差评**：明显存在恶意攻击或敲诈勒索行为\\n\\n## 三、申诉流程\\n\\n### 3.1 提交申诉\\n\\n1. 登录商家后台\\n2. 进入\"订单管理\" > \"评价管理\"\\n3. 找到需要申诉的评价，点击\"申诉\"按钮\\n4. 选择申诉理由\\n5. 上传相关证明材料\\n6. 提交申诉\\n\\n### 3.2 审核时效\\n\\n平台会在收到申诉后的**3个工作日**内完成审核，并将结果通过站内信通知商家。\\n\\n### 3.3 申诉结果\\n\\n- 申诉通过：违规评价将被删除或隐藏\\n- 申诉驳回：评价继续保留，商家可以通过回复评价的方式进行说明\\n\\n## 四、注意事项\\n\\n⚠️ **重要提示**：正常的负面评价（如质量问题、物流问题等真实反馈）不支持申诉删除。商家应当重视买家的真实反馈，积极改进商品和服务质量。\\n\\n## 五、违规处罚\\n\\n如商家恶意提交虚假申诉，平台将视情节严重程度给予以下处罚：\\n\\n- 警告\\n- 限制申诉功能\\n- 店铺降权\\n- 严重者将清退出平台',
-            },
-            {
-              title: '申诉流程说明',
-              category: '商家服务 > 售后管理',
-              snippet: '申诉入口位于订单管理-评价管理模块，审核周期为3个工作日...',
-              content: '# 申诉流程详细说明\\n\\n## 申诉入口\\n\\n申诉入口位于**订单管理 - 评价管理**模块。\\n\\n## 审核周期\\n\\n标准审核周期为**3个工作日**。如遇特殊情况（如节假日、大促期间），审核时间可能会适当延长。\\n\\n## 所需材料\\n\\n根据不同的申诉理由，需要准备不同的证明材料：\\n\\n1. **辱骂类评价**：截图保存完整的评价内容\\n2. **广告推广**：标注出评价中的广告内容\\n3. **恶意差评**：提供聊天记录、订单信息等证明材料\\n\\n## 申诉技巧\\n\\n- 描述清晰：说明申诉理由时要言简意赅\\n- 证据充分：提供的证明材料要完整、清晰\\n- 及时跟进：关注审核进度，必要时补充材料',
-            },
-          ],
-          timestamp: new Date(Date.now() - 3500000),
-        },
-      ],
-      createdAt: new Date(Date.now() - 3600000),
-    },
-  ]);
-  
-  const [activeConversationId, setActiveConversationId] = useState('1');
+  const {
+    conversations,
+    activeConversationId,
+    setActiveConversationId,
+    addConversation,
+    addMessageToConversation,
+    updateConversation,
+    deleteConversation,
+  } = useStore();
+
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -100,7 +54,7 @@ export function ChatInterface() {
         setHeaderHeight(header.offsetHeight);
       }
     };
-    
+
     updateHeaderHeight();
     window.addEventListener('resize', updateHeaderHeight);
     return () => window.removeEventListener('resize', updateHeaderHeight);
@@ -131,7 +85,7 @@ export function ChatInterface() {
       messages: [],
       createdAt: new Date(),
     };
-    setConversations([newConversation, ...conversations]);
+    addConversation(newConversation);
     setActiveConversationId(newConversation.id);
   };
 
@@ -152,17 +106,12 @@ export function ChatInterface() {
     };
 
     // Update conversation with user message
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === activeConversationId
-          ? {
-              ...conv,
-              title: conv.messages.length === 0 ? input.slice(0, 20) + '...' : conv.title,
-              messages: [...conv.messages, userMessage],
-            }
-          : conv
-      )
-    );
+    addMessageToConversation(activeConversationId, userMessage);
+    if (activeConversation.messages.length === 0) {
+      updateConversation(activeConversationId, {
+        title: input.slice(0, 20) + '...',
+      });
+    }
 
     setInput('');
     setIsTyping(true);
@@ -193,14 +142,7 @@ export function ChatInterface() {
       timestamp: new Date(),
     };
 
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === activeConversationId
-          ? { ...conv, messages: [...conv.messages, assistantMessage] }
-          : conv
-      )
-    );
-
+    addMessageToConversation(activeConversationId, assistantMessage);
     setIsTyping(false);
   };
 
@@ -213,7 +155,7 @@ export function ChatInterface() {
 
   const handleSourceClick = (source: typeof selectedSource) => {
     if (!source) return;
-    
+
     // If there's a current source, add it to history
     if (selectedSource) {
       const newHistory = sourceHistory.slice(0, historyIndex + 1);
@@ -225,7 +167,7 @@ export function ChatInterface() {
       setSourceHistory([]);
       setHistoryIndex(-1);
     }
-    
+
     setSelectedSource(source);
   };
 
@@ -261,15 +203,15 @@ export function ChatInterface() {
 
   const handleDeleteConversation = (conversationId: string, e: ReactMouseEvent) => {
     e.stopPropagation(); // Prevent triggering the conversation selection
-    
+
     // Filter out the conversation to delete
-    const updatedConversations = conversations.filter(conv => conv.id !== conversationId);
-    setConversations(updatedConversations);
-    
+    deleteConversation(conversationId);
+
     // If deleting the active conversation, switch to another one
     if (activeConversationId === conversationId) {
-      if (updatedConversations.length > 0) {
-        setActiveConversationId(updatedConversations[0].id);
+      const remainingConversations = conversations.filter(c => c.id !== conversationId);
+      if (remainingConversations.length > 0) {
+        setActiveConversationId(remainingConversations[0].id);
       } else {
         // If no conversations left, create a new one
         const newConversation: Conversation = {
@@ -278,7 +220,7 @@ export function ChatInterface() {
           messages: [],
           createdAt: new Date(),
         };
-        setConversations([newConversation]);
+        addConversation(newConversation);
         setActiveConversationId(newConversation.id);
       }
     }
@@ -288,7 +230,7 @@ export function ChatInterface() {
     <div className="flex gap-4 h-[calc(100vh-100px)] relative bg-white">
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -317,7 +259,7 @@ export function ChatInterface() {
       </button>
 
       {/* Sidebar - Conversation History */}
-      <div 
+      <div
         className={`bg-white rounded-lg border border-gray-200 flex flex-col transition-all duration-300 
           fixed inset-y-0 left-0 z-50 w-72 lg:w-80
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -342,7 +284,7 @@ export function ChatInterface() {
             新建对话
           </Button>
         </div>
-        
+
         <ScrollArea className="flex-1">
           <div className="p-2">
             {conversations.map(conv => (
@@ -352,11 +294,10 @@ export function ChatInterface() {
                   setActiveConversationId(conv.id);
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full text-left p-3 rounded-lg mb-2 transition-colors group relative cursor-pointer ${
-                  activeConversationId === conv.id
+                className={`w-full text-left p-3 rounded-lg mb-2 transition-colors group relative cursor-pointer ${activeConversationId === conv.id
                     ? 'bg-blue-50 border border-blue-200'
                     : 'hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <div className="flex items-start gap-2">
                   <MessageSquare className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0" />
@@ -437,15 +378,14 @@ export function ChatInterface() {
                   <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-3xl ${message.role === 'user' ? 'ml-12' : 'mr-12'}`}>
                       <div
-                        className={`p-3 lg:p-4 rounded-lg ${
-                          message.role === 'user'
+                        className={`p-3 lg:p-4 rounded-lg ${message.role === 'user'
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-50 text-gray-900'
-                        }`}
+                          }`}
                       >
                         <p className="whitespace-pre-wrap text-sm lg:text-base">{message.content}</p>
                       </div>
-                      
+
                       {/* Sources */}
                       {message.sources && message.sources.length > 0 && (
                         <div className="mt-3 space-y-2">
@@ -473,7 +413,7 @@ export function ChatInterface() {
                           ))}
                         </div>
                       )}
-                      
+
                       <p className="text-xs text-gray-400 mt-2">
                         {message.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
                       </p>
@@ -481,7 +421,7 @@ export function ChatInterface() {
                   </div>
                 ))
               )}
-              
+
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="max-w-3xl mr-12">
@@ -509,7 +449,7 @@ export function ChatInterface() {
                     placeholder="输入您的问题..."
                     className="w-full border-0 resize-none focus:ring-0 focus:outline-none p-2 min-h-[50px] lg:min-h-[60px] max-h-[150px] lg:max-h-[200px] bg-white text-sm lg:text-base"
                   />
-                  
+
                   {/* Bottom Controls */}
                   <div className="flex items-center justify-between pt-2">
                     {/* Left Side Tools */}
@@ -521,7 +461,7 @@ export function ChatInterface() {
                         <Paperclip className="w-4 h-4" />
                       </button>
                     </div>
-                    
+
                     {/* Right Side Actions */}
                     <div className="flex items-center gap-1">
                       <button
@@ -606,9 +546,8 @@ export function ChatInterface() {
                         <button
                           key={idx}
                           onClick={() => handleHistoryItemClick(idx)}
-                          className={`w-full text-left px-3 py-2 rounded hover:bg-gray-50 transition-colors ${
-                            idx === historyIndex ? 'bg-blue-50' : ''
-                          }`}
+                          className={`w-full text-left px-3 py-2 rounded hover:bg-gray-50 transition-colors ${idx === historyIndex ? 'bg-blue-50' : ''
+                            }`}
                         >
                           <div className="flex items-start gap-2">
                             <FileText className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
