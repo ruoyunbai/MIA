@@ -1,0 +1,86 @@
+.editorShell {
+  min-height: 100vh;
+  background: #f5f7fb;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: white;
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.headerInner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.titleGroup h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.titleGroup p {
+  margin: 0.2rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.button {
+  border: none;
+  border-radius: 12px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.outlineButton {
+  composes: button;
+  background: white;
+  border: 1px solid var(--color-border);
+}
+
+.primaryButton {
+  composes: button;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+}
+
+.editorArea {
+  flex: 1;
+  max-width: 900px;
+  margin: 1.5rem auto;
+  width: calc(100% - 2rem);
+  border-radius: 18px;
+  background: white;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.textarea {
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  border: none;
+  padding: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  border-radius: 18px;
+  resize: none;
+  outline: none;
+}

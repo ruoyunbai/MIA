@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
+import { MessageSquare, Database, BarChart3, LogIn, LogOut, Menu, X } from 'lucide-react';
 import { ChatInterface } from './components/ChatInterface';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { Dashboard } from './components/Dashboard';
 import { RichTextEditor } from './components/RichTextEditor';
 import { AuthModal } from './components/AuthModal';
-import { MessageSquare, Database, BarChart3, LogIn, LogOut, Menu, X } from 'lucide-react';
-import { Button } from './components/ui/button';
 import { useStore, type User } from './store/useStore';
+import styles from './App.module.css';
 
 const NAV_ITEMS = [
   { id: 'chat', label: '智能问答', icon: MessageSquare },
@@ -53,11 +53,17 @@ export default function App() {
     }
   };
 
-  const navButtonClasses = (tab: TabId, extraClasses = '') =>
-    `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${extraClasses} ${activeTab === tab
-      ? 'bg-blue-500 text-white'
-      : 'text-gray-600 hover:bg-gray-100'
-    }`;
+  const navButtonClasses = (tab: TabId, variant: 'desktop' | 'mobile' = 'desktop') =>
+    [
+      variant === 'desktop' ? styles.navButton : styles.mobileNavButton,
+      activeTab === tab
+        ? variant === 'desktop'
+          ? styles.navButtonActive
+          : styles.mobileNavButtonActive
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -99,7 +105,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={styles.appShell}>
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -107,119 +113,119 @@ export default function App() {
       />
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2 md:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-white" />
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <div className={`${styles.topRow} ${styles.desktopRow}`}>
+            <div className={styles.brand}>
+              <div className={styles.logo}>
+                <MessageSquare className={styles.navIcon} size={20} />
               </div>
-              <div>
-                <h1 className="text-gray-900">MIA 商家智能助手</h1>
-                <p className="text-sm text-gray-500 hidden sm:block">Merchant Intelligent Assistant</p>
+              <div className={styles.brandInfo}>
+                <h1>MIA 商家智能助手</h1>
+                <p>Merchant Intelligent Assistant</p>
               </div>
             </div>
 
             {isMobile ? (
-              <div className="flex items-center gap-3">
+              <div className={styles.mobileControls}>
                 {user ? (
-                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm text-white">{user.name.charAt(0).toUpperCase()}</span>
+                  <div className={styles.profileBadge}>
+                    <span>{user.name.charAt(0).toUpperCase()}</span>
                   </div>
                 ) : (
-                  <Button onClick={() => setShowAuthModal(true)} variant="outline" size="sm">
-                    <LogIn className="w-4 h-4 mr-2" />
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(true)}
+                    className={styles.outlineButton}
+                  >
+                    <LogIn size={16} />
                     登录
-                  </Button>
+                  </button>
                 )}
 
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 text-gray-700"
+                  className={styles.mobileMenuButton}
                   onClick={() => setIsMobileMenuOpen((prev) => !prev)}
                   aria-label="切换导航"
                   aria-expanded={isMobileMenuOpen}
                 >
-                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-4">
-                <nav className="flex gap-2">
+              <div className={styles.desktopRow}>
+                <nav className={styles.desktopNav}>
                   {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
                     <button key={id} onClick={() => handleTabChange(id)} className={navButtonClasses(id)}>
-                      <Icon className="w-4 h-4" />
+                      <Icon className={styles.navIcon} size={16} />
                       {label}
                     </button>
                   ))}
                 </nav>
 
                 {user ? (
-                  <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-sm text-white">{user.name.charAt(0).toUpperCase()}</span>
+                  <div className={styles.userArea}>
+                    <div className={styles.profile}>
+                      <div className={styles.profileBadge}>
+                        <span>{user.name.charAt(0).toUpperCase()}</span>
                       </div>
-                      <span className="text-sm text-gray-700">{user.name}</span>
+                      <span className={styles.profileName}>{user.name}</span>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-600 hover:text-gray-900">
-                      <LogOut className="w-4 h-4" />
-                    </Button>
+                    <button type="button" onClick={handleLogout} className={styles.ghostButton}>
+                      <LogOut size={16} />
+                    </button>
                   </div>
                 ) : (
-                  <Button onClick={() => setShowAuthModal(true)} variant="outline" className="ml-4">
-                    <LogIn className="w-4 h-4 mr-2" />
+                  <button type="button" onClick={() => setShowAuthModal(true)} className={styles.outlineButton}>
+                    <LogIn size={16} />
                     登录
-                  </Button>
+                  </button>
                 )}
               </div>
             )}
           </div>
 
           {isMobile && isMobileMenuOpen && (
-            <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
-              <nav className="flex flex-col gap-2">
+            <div className={styles.mobileMenu}>
+              <nav className={styles.mobileNav}>
                 {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
                     onClick={() => handleTabChange(id)}
-                    className={navButtonClasses(id, 'justify-between w-full text-sm')}
+                    className={navButtonClasses(id, 'mobile')}
                   >
-                    <span className="flex items-center gap-2">
-                      <Icon className="w-4 h-4" />
+                    <span>
+                      <Icon className={styles.navIcon} size={16} />
                       {label}
                     </span>
-                    {activeTab === id && <span className="text-xs">当前</span>}
+                    {activeTab === id && <span className={styles.mobileCurrent}>当前</span>}
                   </button>
                 ))}
               </nav>
 
-              <div className="flex flex-col gap-3">
+              <div className={styles.mobileUser}>
                 {user ? (
                   <>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-base text-white">{user.name.charAt(0).toUpperCase()}</span>
+                    <div className={styles.mobileUserInfo}>
+                      <div className={styles.mobileProfile}>
+                        <span>{user.name.charAt(0).toUpperCase()}</span>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                      <div className={styles.mobileUserDetails}>
+                        <p>{user.name}</p>
+                        <span>{user.email}</span>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      onClick={handleLogout}
-                      className="justify-start text-gray-600 hover:text-gray-900"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
+                    <button type="button" onClick={handleLogout} className={styles.ghostButton}>
+                      <LogOut size={16} />
                       退出登录
-                    </Button>
+                    </button>
                   </>
                 ) : (
-                  <Button onClick={() => setShowAuthModal(true)} className="w-full">
-                    <LogIn className="w-4 h-4 mr-2" />
+                  <button type="button" onClick={() => setShowAuthModal(true)} className={styles.primaryButton}>
+                    <LogIn size={16} />
                     登录
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
@@ -228,10 +234,17 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-4 bg-white">
-        {activeTab === 'chat' && <ChatInterface />}
-        {activeTab === 'knowledge' && <KnowledgeBase onOpenEditor={setEditorState} />}
-        {activeTab === 'dashboard' && <Dashboard />}
+      <main className={styles.main}>
+        <div className={styles.contentShell}>
+          {activeTab === 'chat' ? (
+            <ChatInterface />
+          ) : (
+            <div className={styles.contentPanel}>
+              {activeTab === 'knowledge' && <KnowledgeBase onOpenEditor={setEditorState} />}
+              {activeTab === 'dashboard' && <Dashboard />}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

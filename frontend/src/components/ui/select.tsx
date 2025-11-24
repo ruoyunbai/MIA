@@ -7,7 +7,6 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from "lucide-react";
-
 import { cn } from "./utils";
 
 function Select({

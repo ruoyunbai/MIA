@@ -1,0 +1,144 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 70;
+}
+
+.modal {
+  width: min(440px, 100%);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 35px 60px rgba(15, 23, 42, 0.25);
+  position: relative;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tabButton {
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: rgba(148, 163, 184, 0.2);
+  color: #475467;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tabActive {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  box-shadow: 0 12px 25px rgba(37, 99, 235, 0.35);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.input {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.button {
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryButton {
+  composes: button;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 20px 35px rgba(37, 99, 235, 0.35);
+}
+
+.secondaryButton {
+  composes: button;
+  background: white;
+  color: #0f172a;
+  border: 1px solid var(--color-border);
+}
+
+.ghostButton {
+  border: none;
+  background: transparent;
+  color: #475467;
+  cursor: pointer;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.qrcodeBox {
+  border: 1px dashed var(--color-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.passwordField {
+  position: relative;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}

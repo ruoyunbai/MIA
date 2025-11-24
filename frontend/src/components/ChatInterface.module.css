@@ -1,0 +1,107 @@
+.interface {
+  flex: 1;
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  background: white;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 25px 45px rgba(15, 23, 42, 0.08);
+  min-height: 0;
+}
+
+.sidebarOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 40;
+}
+
+.toggleSidebar {
+  position: absolute;
+  left: 1.25rem;
+  top: 1.25rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475467;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+  cursor: pointer;
+  z-index: 30;
+}
+
+.toggleSidebar:hover {
+  color: #0f172a;
+}
+
+.newChat {
+  position: absolute;
+  left: 4.5rem;
+  top: 1.25rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 15px 30px rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+  z-index: 30;
+}
+
+.newChat:hover {
+  background: var(--color-primary-dark);
+}
+
+.workspace {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  position: relative;
+  min-height: 0;
+}
+
+.chatPanel {
+  background: white;
+  border-radius: 16px;
+  /* border: 1px solid var(--color-border); */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panelBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .interface {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .toggleSidebar {
+    top: 0.5rem;
+    left: 0.5rem;
+  }
+
+  .newChat {
+    top: 0.5rem;
+    left: 3.75rem;
+  }
+
+  .workspace {
+    flex-direction: column;
+  }
+}

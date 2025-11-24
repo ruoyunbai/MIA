@@ -1,0 +1,41 @@
+.filterBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1fr;
+  gap: 1rem;
+}
+
+.searchField {
+  position: relative;
+}
+
+.searchInput {
+  composes: input from '../KnowledgeBase.module.css';
+  padding-left: 2.5rem;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.select {
+  composes: select from '../KnowledgeBase.module.css';
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 768px) {
+  .filterBar {
+    grid-template-columns: 1fr;
+  }
+}

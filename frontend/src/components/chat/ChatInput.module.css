@@ -1,0 +1,104 @@
+.inputSection {
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid var(--color-border);
+}
+
+.inputCard {
+  max-width: 720px;
+  margin: 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0.75rem;
+  background: white;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+}
+
+.textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  padding: 0.5rem;
+  min-height: 56px;
+  max-height: 200px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+}
+
+.toolRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.iconButton {
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  padding: 0.35rem 0.45rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconButton:hover {
+  color: #0f172a;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.desktopOnly {
+  display: none;
+}
+
+.sendButton {
+  border: none;
+  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.sendButton:disabled {
+  background: #cbd5f5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .inputSection {
+    padding: 0.75rem;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktopOnly {
+    display: inline-flex;
+  }
+}

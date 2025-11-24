@@ -1,5 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, MessageSquare, FileText, AlertCircle } from 'lucide-react';
+import styles from './Dashboard.module.css';
 
 const questionFrequencyData = [
   { question: '差评如何申诉？', count: 45 },
@@ -34,53 +35,53 @@ export function Dashboard() {
   const totalDocuments = categoryHeatData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="space-y-6">
+    <div className={styles.dashboard}>
       {/* Stats Overview */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">总提问数</p>
-            <MessageSquare className="w-5 h-5 text-blue-500" />
+      <div className={styles.statGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statHeader}>
+            <p className={styles.statTitle}>总提问数</p>
+            <MessageSquare size={20} color="#2563eb" />
           </div>
-          <p className="text-2xl text-gray-900 mb-1">{totalQuestions}</p>
-          <p className="text-xs text-green-600 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" />
+          <p className={styles.statValue}>{totalQuestions}</p>
+          <p className={styles.trendPositive}>
+            <TrendingUp size={14} />
             +12% 本周
           </p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">知识文档</p>
-            <FileText className="w-5 h-5 text-purple-500" />
+        <div className={styles.statCard}>
+          <div className={styles.statHeader}>
+            <p className={styles.statTitle}>知识文档</p>
+            <FileText size={20} color="#7c3aed" />
           </div>
-          <p className="text-2xl text-gray-900 mb-1">{totalDocuments}</p>
-          <p className="text-xs text-gray-500">4个业务分类</p>
+          <p className={styles.statValue}>{totalDocuments}</p>
+          <p className={styles.statNote}>4个业务分类</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">命中率</p>
-            <TrendingUp className="w-5 h-5 text-green-500" />
+        <div className={styles.statCard}>
+          <div className={styles.statHeader}>
+            <p className={styles.statTitle}>命中率</p>
+            <TrendingUp size={20} color="#16a34a" />
           </div>
-          <p className="text-2xl text-gray-900 mb-1">94.2%</p>
-          <p className="text-xs text-green-600">+2.3% 较上周</p>
+          <p className={styles.statValue}>94.2%</p>
+          <p className={styles.trendPositive}>+2.3% 较上周</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">零命中问题</p>
-            <AlertCircle className="w-5 h-5 text-orange-500" />
+        <div className={styles.statCard}>
+          <div className={styles.statHeader}>
+            <p className={styles.statTitle}>零命中问题</p>
+            <AlertCircle size={20} color="#f97316" />
           </div>
-          <p className="text-2xl text-gray-900 mb-1">{zeroHitQuestions.length}</p>
-          <p className="text-xs text-orange-600">需补充知识</p>
+          <p className={styles.statValue}>{zeroHitQuestions.length}</p>
+          <p className={styles.trendWarning}>需补充知识</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className={styles.charts}>
         {/* Question Frequency Chart */}
-        <div className="col-span-2 bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-gray-900 mb-4">高频问题 Top 10</h3>
+        <div className={styles.chartCard} style={{ gridColumn: 'span 2' }}>
+          <h3 className={styles.chartTitle}>高频问题 Top 10</h3>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={questionFrequencyData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
@@ -93,8 +94,8 @@ export function Dashboard() {
         </div>
 
         {/* Category Heat Pie Chart */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-gray-900 mb-4">知识点热力分布</h3>
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>知识点热力分布</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -114,15 +115,15 @@ export function Dashboard() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
-          
-          <div className="mt-4 space-y-2">
+
+          <div className={styles.pieLegend}>
             {categoryHeatData.map(item => (
-              <div key={item.name} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }}></div>
-                  <span className="text-gray-700">{item.name}</span>
+              <div key={item.name} className={styles.pieLegendItem}>
+                <div className={styles.legendLabel}>
+                  <span className={styles.legendDot} style={{ backgroundColor: item.color }} />
+                  <span>{item.name}</span>
                 </div>
-                <span className="text-gray-900">{item.value} 次</span>
+                <span>{item.value} 次</span>
               </div>
             ))}
           </div>
@@ -130,28 +131,23 @@ export function Dashboard() {
       </div>
 
       {/* Zero Hit Questions */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className={styles.zeroHitCard}>
+        <div className={styles.zeroHeader}>
           <div>
-            <h3 className="text-gray-900 mb-1">零命中问题列表</h3>
-            <p className="text-sm text-gray-500">这些问题未能在知识库中找到匹配内容，建议补充相关文档</p>
+            <h3 className={styles.zeroTitle}>零命中问题列表</h3>
+            <p className={styles.zeroSubTitle}>这些问题未命中知识库，建议补充相关文档</p>
           </div>
-          <AlertCircle className="w-6 h-6 text-orange-500" />
+          <AlertCircle size={28} color="#f97316" />
         </div>
-        
-        <div className="space-y-3">
+
+        <div className={styles.zeroList}>
           {zeroHitQuestions.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center">
-                  <span className="text-sm text-orange-700">{idx + 1}</span>
-                </div>
-                <p className="text-gray-900">{item.question}</p>
+            <div key={idx} className={styles.zeroItem}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className={styles.zeroBadge}>{idx + 1}</div>
+                <p className={styles.zeroQuestion}>{item.question}</p>
               </div>
-              <p className="text-sm text-gray-500">{item.timestamp}</p>
+              <p className={styles.zeroTime}>{item.timestamp}</p>
             </div>
           ))}
         </div>
