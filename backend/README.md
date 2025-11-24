@@ -34,6 +34,9 @@ $ npm install
 ## Compile and run the project
 
 ```bash
+
+docker run -p 8000:8000 chromadb/chroma
+
 # development
 $ npm run start
 
