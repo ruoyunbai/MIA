@@ -5,17 +5,10 @@ import { KnowledgeFilterBar } from "./knowledge-base/FilterBar";
 import { KnowledgeDocumentTable } from "./knowledge-base/DocumentTable";
 import { CategoryManagement } from "./knowledge-base/CategoryManagement";
 import styles from "./KnowledgeBase.module.css";
+import type { OpenEditorPayload } from "../hooks/useEditorModal";
 
 interface KnowledgeBaseProps {
-  onOpenEditor: (state: {
-    isOpen: boolean;
-    title: string;
-    content: string;
-    category: string;
-    subCategory: string;
-    status: "active" | "inactive";
-    onSave: (content: string) => void;
-  }) => void;
+  onOpenEditor: (state: OpenEditorPayload) => void;
 }
 
 const TAB_OPTIONS = [
