@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import { RichTextEditor } from '../components/RichTextEditor';
 
 export interface EditorModalState {
@@ -17,7 +17,7 @@ interface UseEditorModalResult {
   editorState: EditorModalState | null;
   openEditor: (state: OpenEditorPayload) => void;
   closeEditor: () => void;
-  EditorModal: JSX.Element | null;
+  EditorModal: ReactElement | null;
 }
 
 export function useEditorModal(): UseEditorModalResult {

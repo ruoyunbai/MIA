@@ -1,10 +1,12 @@
 import { KnowledgeBase } from '../components/KnowledgeBase';
-import type { OpenEditorPayload } from '../hooks/useEditorModal';
+import { useRootOutletContext } from '../routes/RootLayout';
+import styles from '../App.module.css';
 
-interface KnowledgePageProps {
-  onOpenEditor: (state: OpenEditorPayload) => void;
-}
-
-export function KnowledgePage({ onOpenEditor }: KnowledgePageProps) {
-  return <KnowledgeBase onOpenEditor={onOpenEditor} />;
+export function KnowledgePage() {
+  const { openEditor } = useRootOutletContext();
+  return (
+    <div className={styles.contentPanel}>
+      <KnowledgeBase onOpenEditor={openEditor} />
+    </div>
+  );
 }
