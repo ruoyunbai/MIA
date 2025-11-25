@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LlmModule } from './llm/llm.module';
 import { Category, Document, DocumentChunk, VectorIndex, User, Conversation, Message, SearchLog } from './entities';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { Category, Document, DocumentChunk, VectorIndex, User, Conversation, Mes
       inject: [ConfigService],
     }),
     LlmModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

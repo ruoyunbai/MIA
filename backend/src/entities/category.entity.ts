@@ -22,7 +22,7 @@ export class Category {
     name: string;
 
     @Column({ nullable: true, comment: '父分类ID' })
-    parentId: number;
+    parentId: number | null;
 
     @ManyToOne(() => Category, (category) => category.children, {
         onDelete: 'CASCADE',
@@ -34,7 +34,7 @@ export class Category {
     children: Category[];
 
     @Column({ nullable: true, comment: '创建者ID' })
-    userId: number;
+    userId: number | null;
 
     @ManyToOne(() => User, (user) => user.categories, {
         onDelete: 'CASCADE',
