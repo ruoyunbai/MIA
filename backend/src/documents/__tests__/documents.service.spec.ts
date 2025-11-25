@@ -1,8 +1,8 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { ConfigService } from '@nestjs/config';
 import COS from 'cos-nodejs-sdk-v5';
 import * as dotenv from 'dotenv';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { DocumentsService } from '../documents.service';
 import { UploadedDocumentFile } from '../interfaces/uploaded-document-file.interface';
 

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   BadRequestException,
   Injectable,
@@ -6,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import COS from 'cos-nodejs-sdk-v5';
-import { randomUUID } from 'crypto';
 import {
   detectDocumentType,
   DocumentFileType,

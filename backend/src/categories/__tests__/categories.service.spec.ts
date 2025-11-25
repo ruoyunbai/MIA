@@ -1,9 +1,9 @@
+import * as path from 'node:path';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as dotenv from 'dotenv';
-import * as path from 'node:path';
 import { CategoriesService } from '../categories.service';
 import {
   Category,

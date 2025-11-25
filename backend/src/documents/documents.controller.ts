@@ -10,11 +10,11 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
-import type { StorageEngine } from 'multer';
 import { DocumentsService } from './documents.service';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { GetDownloadUrlDto } from './dto/get-download-url.dto';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
+import type { StorageEngine } from 'multer';
 
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
 const MEMORY_STORAGE: StorageEngine = memoryStorage();
