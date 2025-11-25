@@ -66,19 +66,26 @@
 ### `documents` - 文档表
 存储知识库文档的元数据和原始内容。
 
-| 字段名        | 类型         | 必填 | 默认值   | 说明                                       |
-| :------------ | :----------- | :--- | :------- | :----------------------------------------- |
-| `id`          | INT          | 是   | Auto Inc | 主键                                       |
-| `title`       | VARCHAR(255) | 是   | -        | 文档标题                                   |
-| `content`     | TEXT         | 否   | NULL     | 文档原始内容 (Markdown/Text)               |
-| `categoryId`  | INT          | 否   | NULL     | 所属分类 (外键 -> categories.id)           |
-| `userId`      | INT          | 否   | NULL     | 所有者ID (外键 -> users.id)                |
-| `status`      | ENUM         | 是   | 'active' | 状态: active, inactive, processing, failed |
-| `fileUrl`     | VARCHAR(500) | 否   | NULL     | 原始文件下载地址 (如 PDF)                  |
-| `metaInfo`    | JSON         | 否   | NULL     | 灵活元数据 (作者, 标签等)                  |
-| `contentHash` | VARCHAR(64)  | 否   | NULL     | 内容哈希 (用于去重)                        |
-| `createdAt`   | DATETIME     | 是   | Now      | 创建时间                                   |
-| `updatedAt`   | DATETIME     | 是   | Now      | 更新时间                                   |
+| 字段名                | 类型         | 必填 | 默认值        | 说明                                                       |
+| :-------------------- | :----------- | :--- | :------------ | :--------------------------------------------------------- |
+| `id`                  | INT          | 是   | Auto Inc      | 主键                                                       |
+| `title`               | VARCHAR(255) | 是   | -             | 文档标题                                                   |
+| `content`             | TEXT         | 否   | NULL          | 文档原始内容 (Markdown/Text)                               |
+| `categoryId`          | INT          | 否   | NULL          | 所属分类 (外键 -> categories.id)                           |
+| `userId`              | INT          | 否   | NULL          | 所有者ID (外键 -> users.id)                                |
+| `status`              | ENUM         | 是   | 'active'      | 状态: active, inactive, processing, failed                 |
+| `fileUrl`             | VARCHAR(500) | 否   | NULL          | 原始文件下载地址 (如 PDF)                                  |
+| `metaInfo`            | JSON         | 否   | NULL          | 灵活元数据 (作者, 标签等)                                  |
+| `contentHash`         | VARCHAR(64)  | 否   | NULL          | 内容哈希 (用于去重)                                        |
+| `ingestionStatus`     | ENUM         | 是   | 'uploaded'    | 入库状态: uploaded → chunked → embedded → indexed → failed |
+| `ingestionError`      | TEXT         | 否   | NULL          | 最近一次入库失败原因                                       |
+| `chunkedAt`           | DATETIME     | 否   | NULL          | 完成切片时间                                               |
+| `embeddedAt`          | DATETIME     | 否   | NULL          | 完成 Embedding 时间                                        |
+| `indexedAt`           | DATETIME     | 否   | NULL          | 写入检索索引时间                                           |
+| `ingestionRetryCount` | INT          | 是   | 0             | 入库失败重试次数                                           |
+| `lastIngestionRetryAt`| DATETIME     | 否   | NULL          | 最近一次重试时间                                           |
+| `createdAt`           | DATETIME     | 是   | Now           | 创建时间                                                   |
+| `updatedAt`           | DATETIME     | 是   | Now           | 更新时间                                                   |
 
 ### `document_chunks` - 知识切片表
 RAG 核心表，存储文档切分后的片段。

@@ -19,6 +19,14 @@ export enum DocumentStatus {
     FAILED = 'failed',
 }
 
+export enum DocumentIngestionStatus {
+    UPLOADED = 'uploaded',
+    CHUNKED = 'chunked',
+    EMBEDDED = 'embedded',
+    INDEXED = 'indexed',
+    FAILED = 'failed',
+}
+
 @Entity('documents')
 export class Document {
     @PrimaryGeneratedColumn('increment')
@@ -64,6 +72,32 @@ export class Document {
 
     @Column({ length: 64, nullable: true, comment: '内容哈希，用于去重' })
     contentHash: string;
+
+    @Column({
+        type: 'enum',
+        enum: DocumentIngestionStatus,
+        default: DocumentIngestionStatus.UPLOADED,
+        comment: '文档入库状态',
+    })
+    ingestionStatus: DocumentIngestionStatus;
+
+    @Column({ type: 'text', nullable: true, comment: '入库失败原因' })
+    ingestionError: string;
+
+    @Column({ type: 'timestamp', nullable: true, comment: '完成切片时间' })
+    chunkedAt: Date;
+
+    @Column({ type: 'timestamp', nullable: true, comment: '生成Embedding时间' })
+    embeddedAt: Date;
+
+    @Column({ type: 'timestamp', nullable: true, comment: '写入索引时间' })
+    indexedAt: Date;
+
+    @Column({ default: 0, comment: '入库重试次数' })
+    ingestionRetryCount: number;
+
+    @Column({ type: 'timestamp', nullable: true, comment: '最近一次重试时间' })
+    lastIngestionRetryAt: Date;
 
     @OneToMany(() => DocumentChunk, (chunk) => chunk.document)
     chunks: DocumentChunk[];
