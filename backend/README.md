@@ -25,6 +25,32 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## COS 文档上传与下载
+
+后端内置了一组面向 COS（对象存储）的文档上传/下载接口，支持 PDF、Word（.doc/.docx）两种格式，并会对文件头做签名校验，确保上传的是真实文档。
+
+### 环境变量
+
+在 `backend` 根目录配置以下变量后再启动服务：
+
+| 变量名 | 说明 |
+| --- | --- |
+| `COS_SECRET_ID` | 腾讯云主账号或临时密钥 ID |
+| `COS_SECRET_KEY` | 密钥 |
+| `COS_BUCKET` | 目标存储桶，格式如 `example-1250000000` |
+| `COS_REGION` | 桶所在地域，例：`ap-shanghai` |
+
+未配置上述变量时接口会返回 500，避免误写入。
+
+### API 列表
+
+- `POST /documents/upload`  
+  `multipart/form-data`，字段 `file` 为必填，最大 25MB，可选 `folder` 用于自定义 COS 目录。上传成功后返回对象 Key、文件大小、MIME，以及一个默认 1 小时有效的下载 URL。
+- `GET /documents/download-url?key=:key&expiresIn=3600`  
+  返回指定对象 Key 的签名 URL，`expiresIn` (60~86400 秒) 可自定义有效期。
+
+上传接口会拦截并拒绝非 PDF/Word 的 MIME 或非法文件头（例如伪装的脚本），同时会把 `\`、`..` 等目录逃逸字符清理掉后再写入 COS。
+
 ## Project setup
 
 ```bash

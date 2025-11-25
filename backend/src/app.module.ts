@@ -15,6 +15,7 @@ import {
   SearchLog,
 } from './entities';
 import { CategoriesModule } from './categories/categories.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { CategoriesModule } from './categories/categories.module';
     }),
     LlmModule,
     CategoriesModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

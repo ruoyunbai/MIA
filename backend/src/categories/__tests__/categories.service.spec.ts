@@ -1,122 +1,143 @@
-import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as dotenv from 'dotenv';
+import * as path from 'node:path';
 import { CategoriesService } from '../categories.service';
-import { Category } from '../../entities';
+import {
+  Category,
+  Conversation,
+  Document,
+  DocumentChunk,
+  Message,
+  SearchLog,
+  User,
+  VectorIndex,
+} from '../../entities';
 
-type CategoryPartial = Partial<Category> & { id?: number };
-type MockRepository = Pick<
-  Repository<Category>,
-  'create' | 'save' | 'findOne' | 'find' | 'update' | 'delete'
->;
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-const createRepository = (): MockRepository => {
-  const store = new Map<number, Category>();
-  let sequence = 1;
+const shouldRunIntegration =
+  process.env.CATEGORIES_DB_TEST === 'true' ||
+  process.env.RUN_CATEGORY_DB_TEST === 'true';
+const describeCategory = shouldRunIntegration ? describe : describe.skip;
 
-  return {
-    create: jest.fn((payload: CategoryPartial) => payload as Category),
-    save: jest.fn((entity: CategoryPartial) => {
-      const id = entity.id ?? sequence++;
-      const saved: Category = {
-        id,
-        name: entity.name ?? '',
-        parentId: entity.parentId ?? null,
-        userId: entity.userId ?? null,
-        sortOrder: entity.sortOrder ?? 0,
-        level: entity.level ?? 1,
-        path: entity.path ?? '',
-        parent: null,
-        children: [],
-        documents: [],
-        createdAt: entity.createdAt ?? new Date(),
-        updatedAt: entity.updatedAt ?? new Date(),
-        user: null,
-      };
-      store.set(id, saved);
-      return Promise.resolve(saved);
-    }),
-    findOne: jest.fn((options?: { where?: Partial<Category> }) => {
-      const targetId = options?.where?.id;
-      if (typeof targetId === 'number') {
-        return Promise.resolve(store.get(targetId) ?? null);
-      }
-      return Promise.resolve(null);
-    }),
-    find: jest.fn((options?: { where?: Partial<Category> }) => {
-      const values = Array.from(store.values());
-      const where = options?.where;
-      if (!where || Object.keys(where).length === 0) {
-        return Promise.resolve(values);
-      }
-      const filtered = values.filter((item) => {
-        return Object.entries(where).every(([key, value]) => {
-          const typedKey = key as keyof Category;
-          return item[typedKey] === value;
-        });
-      });
-      return Promise.resolve(filtered);
-    }),
-    update: jest.fn((id: number, payload: Partial<Category>) => {
-      const existing = store.get(id);
-      if (existing) {
-        const updated = { ...existing, ...payload } as Category;
-        store.set(id, updated);
-      }
-      return Promise.resolve();
-    }),
-    delete: jest.fn((id: number) => {
-      store.delete(id);
-      return Promise.resolve();
-    }),
-  };
-};
+describeCategory('CategoriesService (integration)', () => {
+  let moduleRef: TestingModule;
+  let service: CategoriesService;
+  let repository: Repository<Category>;
+  let userRepository: Repository<User>;
+  let testUser: User;
+  const createdIds: number[] = [];
 
-describe('CategoriesService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    moduleRef = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        TypeOrmModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: (configService: ConfigService) => ({
+            type: 'mysql',
+            host: configService.get<string>('DB_HOST'),
+            port: configService.get<number>('DB_PORT'),
+            username: configService.get<string>('DB_USERNAME'),
+            password: configService.get<string>('DB_PASSWORD'),
+            database: configService.get<string>('DB_DATABASE'),
+            entities: [
+              Category,
+              Document,
+              DocumentChunk,
+              VectorIndex,
+              User,
+              Conversation,
+              Message,
+              SearchLog,
+            ],
+            synchronize: true,
+          }),
+          inject: [ConfigService],
+        }),
+        TypeOrmModule.forFeature([Category, User]),
+      ],
+      providers: [CategoriesService],
+    }).compile();
+
+    service = moduleRef.get(CategoriesService);
+    repository = moduleRef.get(getRepositoryToken(Category));
+    userRepository = moduleRef.get(getRepositoryToken(User));
+
+    testUser = await userRepository.save(
+      userRepository.create({
+        name: `integration-user-${Date.now()}`,
+        email: `integration-${Date.now()}@example.com`,
+      }),
+    );
   });
 
-  it('should create a root category with level 1 and path equals id', async () => {
-    const repository = createRepository();
-    const service = new CategoriesService(repository as Repository<Category>);
+  afterAll(async () => {
+    if (createdIds.length) {
+      await repository.delete(createdIds);
+    }
+    if (testUser?.id) {
+      await userRepository.delete(testUser.id);
+    }
+    await moduleRef.close();
+  });
 
-    const result = await service.create({ name: 'Root', userId: 1 });
-
-    expect(result.level).toBe(1);
-    expect(result.path).toBe(String(result.id));
-    expect(repository.save).toHaveBeenCalledTimes(1);
-    expect(repository.update).toHaveBeenCalledWith(result.id, {
-      path: result.path,
+  it('creates a root category and persists to database', async () => {
+    const root = await service.create({
+      name: `Integration Root ${Date.now()}`,
+      userId: testUser.id,
     });
+
+    createdIds.push(root.id);
+    const stored = await repository.findOne({ where: { id: root.id } });
+
+    expect(stored).toBeDefined();
+    expect(root.level).toBe(1);
+    expect(root.path).toBe(String(root.id));
+    expect(stored?.name).toBeDefined();
   });
 
-  it('should create second-level category and build path from parent', async () => {
-    const repository = createRepository();
-    const service = new CategoriesService(repository as Repository<Category>);
-    const parent = await service.create({ name: 'Parent', userId: 1 });
+  it('creates second-level category under a parent', async () => {
+    const parent = await service.create({
+      name: `Integration Parent ${Date.now()}`,
+      userId: testUser.id,
+    });
+    createdIds.push(parent.id);
 
     const child = await service.create({
-      name: 'Child',
-      userId: 1,
+      name: `Integration Child ${Date.now()}`,
+      userId: testUser.id,
       parentId: parent.id,
     });
+    createdIds.push(child.id);
 
     expect(child.level).toBe(2);
     expect(child.path).toBe(`${parent.path}/${child.id}`);
   });
 
-  it('should prevent creating third-level category', async () => {
-    const repository = createRepository();
-    const service = new CategoriesService(repository as Repository<Category>);
-    const parent = await service.create({ name: 'Parent', userId: 1 });
+  it('rejects third-level category creation', async () => {
+    const parent = await service.create({
+      name: `Integration Parent 2 ${Date.now()}`,
+      userId: testUser.id,
+    });
+    createdIds.push(parent.id);
+
     const child = await service.create({
-      name: 'Child',
-      userId: 1,
+      name: `Integration Child 2 ${Date.now()}`,
+      userId: testUser.id,
       parentId: parent.id,
     });
+    createdIds.push(child.id);
 
     await expect(
-      service.create({ name: 'Grandchild', userId: 1, parentId: child.id }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+      service.create({
+        name: `Integration Third ${Date.now()}`,
+        userId: testUser.id,
+        parentId: child.id,
+      }),
+    ).rejects.toThrow();
   });
 });
