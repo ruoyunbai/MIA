@@ -4,9 +4,9 @@ import { LlmService } from './llm.service';
 import { LlmController } from './llm.controller';
 
 @Module({
-    imports: [ConfigModule],
-    controllers: [LlmController],
-    providers: [LlmService],
-    exports: [LlmService],
+  imports: [ConfigModule],
+  controllers: [LlmController],
+  providers: [LlmService],
+  exports: [LlmService],
 })
-export class LlmModule { }
+export class LlmModule {}
