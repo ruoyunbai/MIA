@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 // 定义通用的后端响应结构
 // 注意：这里需要根据实际后端接口返回的格式进行修改
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
     code: number;
     message: string;
     data: T;
@@ -47,9 +47,9 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-    (response: AxiosResponse) => {
+    (response: AxiosResponse<ApiResponse<unknown>>) => {
         // 对响应数据做点什么
-        const res = response.data;
+        const res: ApiResponse<unknown> = response.data;
 
         // 如果响应类型是 blob 或 arraybuffer (用于文件下载等)，直接返回 response
         if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {

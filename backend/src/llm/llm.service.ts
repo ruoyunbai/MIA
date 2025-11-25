@@ -1,3 +1,5 @@
+import { request as httpsRequest } from 'node:https';
+import { request as httpRequest } from 'node:http';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
@@ -85,7 +87,7 @@ export class LlmService {
     });
   }
 
-  async getVectorStore() {
+  getVectorStore() {
     if (!this.vectorStore) {
       const chromaUrl = this.configService.get<string>('CHROMA_DB_URL');
       const miaApiKey = this.configService.get<string>('MIA_OPENAI_API_KEY');
@@ -129,7 +131,7 @@ export class LlmService {
 
   async testVectorStore() {
     try {
-      const vectorStore = await this.getVectorStore();
+      const vectorStore = this.getVectorStore();
 
       // 1. Add a test document
       const testContent = `Test document created at ${new Date().toISOString()}`;
@@ -151,12 +153,13 @@ export class LlmService {
         addedContent: testContent,
         searchResult: results,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('ChromaDB Test Error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       return {
         status: 'error',
         message: 'ChromaDB test failed',
-        error: error.message,
+        error: message,
         details: error,
       };
     }
@@ -179,8 +182,9 @@ export class LlmService {
       const response = await this.llm.invoke(message);
       console.log('LangChain response received');
       return response.content;
-    } catch (error) {
-      console.error('LangChain Error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('LangChain Error:', message);
     }
 
     // 2. Try Direct OpenAI SDK
@@ -194,8 +198,12 @@ export class LlmService {
       return (
         completion.choices[0].message.content + ' (Fallback from Direct OpenAI)'
       );
-    } catch (directError) {
-      console.error('Direct OpenAI Error:', directError.message);
+    } catch (directError: unknown) {
+      const message =
+        directError instanceof Error
+          ? directError.message
+          : String(directError);
+      console.error('Direct OpenAI Error:', message);
     }
 
     // 3. Try Raw Fetch (Ultimate Fallback)
@@ -227,29 +235,75 @@ export class LlmService {
           : 'undefined',
       );
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [{ role: 'user', content: message }],
-        }),
+      const requestBody = JSON.stringify({
+        model: modelName,
+        messages: [{ role: 'user', content: message }],
+      });
+      const parsedUrl = new URL(url);
+      const isHttps = parsedUrl.protocol === 'https:';
+      const requestFn = isHttps ? httpsRequest : httpRequest;
+
+      const responsePayload = await new Promise<{
+        statusCode: number;
+        body: string;
+      }>((resolve, reject) => {
+        const req = requestFn(
+          {
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.port ? Number(parsedUrl.port) : isHttps ? 443 : 80,
+            path: `${parsedUrl.pathname}${parsedUrl.search}`,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Length': Buffer.byteLength(requestBody),
+            },
+          },
+          (res) => {
+            let responseText = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => {
+              responseText += chunk;
+            });
+            res.on('end', () => {
+              resolve({
+                statusCode: res.statusCode ?? 0,
+                body: responseText,
+              });
+            });
+            res.on('error', reject);
+          },
+        );
+
+        req.on('error', reject);
+        req.write(requestBody);
+        req.end();
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (
+        responsePayload.statusCode < 200 ||
+        responsePayload.statusCode >= 300
+      ) {
         throw new Error(
-          `Fetch failed with status ${response.status}: ${errorText}`,
+          `Fetch failed with status ${responsePayload.statusCode}: ${responsePayload.body}`,
         );
       }
 
-      const data = await response.json();
+      const data = JSON.parse(responsePayload.body) as unknown;
+      const chatCompletion = data as {
+        choices?: Array<{
+          message?: {
+            content?: unknown;
+          };
+        }>;
+      };
+      const fallbackContent = chatCompletion.choices?.[0]?.message?.content;
+      if (typeof fallbackContent !== 'string') {
+        throw new Error('Raw fetch response missing message content');
+      }
       console.log('Raw Fetch success');
-      return data.choices[0].message.content + ' (Fallback from Raw Fetch)';
-    } catch (fetchError) {
+      return fallbackContent + ' (Fallback from Raw Fetch)';
+    } catch (fetchError: unknown) {
       console.error('Raw Fetch Error:', fetchError);
       throw new Error(
         'All LLM connection methods failed. Please check your configuration.',

@@ -17,8 +17,9 @@ export class AppService {
       } else {
         return 'Database connection is not initialized';
       }
-    } catch (error) {
-      return `Database connection failed: ${error.message}`;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      return `Database connection failed: ${message}`;
     }
   }
 }

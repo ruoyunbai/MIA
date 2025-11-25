@@ -1,16 +1,21 @@
 import { BadRequestException } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories.service';
 import { Category } from '../../entities';
 
 type CategoryPartial = Partial<Category> & { id?: number };
+type MockRepository = Pick<
+  Repository<Category>,
+  'create' | 'save' | 'findOne' | 'find' | 'update' | 'delete'
+>;
 
-const createRepository = () => {
+const createRepository = (): MockRepository => {
   const store = new Map<number, Category>();
   let sequence = 1;
 
   return {
-    create: jest.fn((payload: CategoryPartial) => payload),
-    save: jest.fn(async (entity: CategoryPartial) => {
+    create: jest.fn((payload: CategoryPartial) => payload as Category),
+    save: jest.fn((entity: CategoryPartial) => {
       const id = entity.id ?? sequence++;
       const saved: Category = {
         id,
@@ -28,39 +33,41 @@ const createRepository = () => {
         user: null,
       };
       store.set(id, saved);
-      return saved;
+      return Promise.resolve(saved);
     }),
-    findOne: jest.fn(async ({ where }: { where: Partial<Category> }) => {
-      const targetId = where.id;
+    findOne: jest.fn((options?: { where?: Partial<Category> }) => {
+      const targetId = options?.where?.id;
       if (typeof targetId === 'number') {
-        return store.get(targetId) ?? null;
+        return Promise.resolve(store.get(targetId) ?? null);
       }
-      return null;
+      return Promise.resolve(null);
     }),
-    find: jest.fn(async ({ where }: { where?: Partial<Category> }) => {
+    find: jest.fn((options?: { where?: Partial<Category> }) => {
       const values = Array.from(store.values());
+      const where = options?.where;
       if (!where || Object.keys(where).length === 0) {
-        return values;
+        return Promise.resolve(values);
       }
-      return values.filter((item) => {
-        return Object.entries(where).every(
-          ([key, value]) => (item as any)[key] === value,
-        );
+      const filtered = values.filter((item) => {
+        return Object.entries(where).every(([key, value]) => {
+          const typedKey = key as keyof Category;
+          return item[typedKey] === value;
+        });
       });
+      return Promise.resolve(filtered);
     }),
-    update: jest.fn(async (id: number, payload: Partial<Category>) => {
+    update: jest.fn((id: number, payload: Partial<Category>) => {
       const existing = store.get(id);
       if (existing) {
         const updated = { ...existing, ...payload } as Category;
         store.set(id, updated);
       }
+      return Promise.resolve();
     }),
-    delete: jest.fn(async (id: number) => {
+    delete: jest.fn((id: number) => {
       store.delete(id);
+      return Promise.resolve();
     }),
-    get data() {
-      return store;
-    },
   };
 };
 
@@ -71,7 +78,7 @@ describe('CategoriesService', () => {
 
   it('should create a root category with level 1 and path equals id', async () => {
     const repository = createRepository();
-    const service = new CategoriesService(repository as any);
+    const service = new CategoriesService(repository as Repository<Category>);
 
     const result = await service.create({ name: 'Root', userId: 1 });
 
@@ -85,7 +92,7 @@ describe('CategoriesService', () => {
 
   it('should create second-level category and build path from parent', async () => {
     const repository = createRepository();
-    const service = new CategoriesService(repository as any);
+    const service = new CategoriesService(repository as Repository<Category>);
     const parent = await service.create({ name: 'Parent', userId: 1 });
 
     const child = await service.create({
@@ -100,7 +107,7 @@ describe('CategoriesService', () => {
 
   it('should prevent creating third-level category', async () => {
     const repository = createRepository();
-    const service = new CategoriesService(repository as any);
+    const service = new CategoriesService(repository as Repository<Category>);
     const parent = await service.create({ name: 'Parent', userId: 1 });
     const child = await service.create({
       name: 'Child',
