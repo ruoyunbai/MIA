@@ -5,6 +5,8 @@ backend/node_modules/
 MerchantintelligentassistantFigma
 # Build output
 dist/
+frontend/dist/
+frontend/.npmrc
 build/
 coverage/
 my_chroma_db/
