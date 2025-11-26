@@ -5,14 +5,14 @@ import {
   createContext,
   useContext,
 } from "react"
-import type { Editor } from "@tiptap/react"
 import { TableMap } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/react"
 import type { Node } from "@tiptap/pm/model"
 
 // --- Hooks ---
+import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { cn, isValidPosition, SR_ONLY } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import { selectCellsByCoords } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 
 // --- Icons ---
@@ -40,7 +40,6 @@ import { useTableDeleteRowColumn } from "@/components/tiptap-node/table-node/ui/
 import { useTableSortRowColumn } from "@/components/tiptap-node/table-node/ui/table-sort-row-column-button"
 import { ColorMenu } from "@/components/tiptap-ui/color-menu"
 import { TableAlignMenu } from "@/components/tiptap-node/table-node/ui/table-alignment-menu"
-
 import { dragEnd } from "@/components/tiptap-node/table-node/extensions/table-handle"
 
 import "./table-handle-menu.scss"

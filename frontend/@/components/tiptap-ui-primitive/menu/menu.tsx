@@ -1,7 +1,12 @@
-import { forwardRef, useCallback, useMemo, useRef, useState } from "react"
+import { forwardRef, useEffect, useMemo, useRef } from "react"
 import * as Ariakit from "@ariakit/react"
 
 // -- Hooks --
+import type {
+  MenuProps,
+  MenuContentProps,
+  MenuItemProps,
+} from "@/components/tiptap-ui-primitive/menu"
 import { useOnClickOutside } from "@/hooks/use-on-click-outside"
 import { useComposedRef } from "@/hooks/use-composed-ref"
 
@@ -16,21 +21,14 @@ import {
 import { Label } from "@/components/tiptap-ui-primitive/label"
 
 // -- Local imports --
-import type {
-  MenuProps,
-  MenuContentProps,
-  MenuItemProps,
-} from "@/components/tiptap-ui-primitive/menu"
 import {
   SearchableContext,
   MenuContext,
   useSearchableContext,
   useMenuContext,
-} from "@/components/tiptap-ui-primitive/menu"
-import {
+
   useMenuPlacement,
-  useMenuItemClick,
-} from "@/components/tiptap-ui-primitive/menu"
+  useMenuItemClick} from "@/components/tiptap-ui-primitive/menu"
 
 // -- Styles --
 import "@/components/tiptap-ui-primitive/menu/menu.scss"
@@ -45,53 +43,90 @@ export function Menu({
   ...props
 }: MenuProps) {
   const isRootMenu = !Ariakit.useMenuContext()
-  const [open, setOpen] = useState<boolean>(false)
   const searchable = !!onValuesChange || isRootMenu
+  const { open: controlledOpen, ...menuProviderProps } = props
 
-  const handleOpenChange = useCallback(
-    (v: boolean) => {
-      if (props.open === undefined) {
-        setOpen(v)
-      }
-      onOpenChange?.(v)
-    },
-    [props.open, onOpenChange]
-  )
-
-  const menuContextValue = useMemo(
-    () => ({
-      isRootMenu,
-      open: props.open ?? open,
-    }),
-    [isRootMenu, props.open, open]
-  )
-
-  const menuProvider = (
+  const provider = (
     <Ariakit.MenuProvider
-      open={open}
-      setOpen={handleOpenChange}
+      {...menuProviderProps}
       setValues={onValuesChange}
       showTimeout={100}
-      {...props}
     >
       {trigger}
-      <MenuContext.Provider value={menuContextValue}>
-        <SearchableContext.Provider value={searchable}>
-          {children}
-        </SearchableContext.Provider>
-      </MenuContext.Provider>
+      <MenuStateBridge
+        controlledOpen={controlledOpen}
+        isRootMenu={isRootMenu}
+        searchable={searchable}
+        onOpenChange={onOpenChange}
+      >
+        {children}
+      </MenuStateBridge>
     </Ariakit.MenuProvider>
   )
 
   if (searchable) {
     return (
       <ComboboxProvider value={value} setValue={onValueChange}>
-        {menuProvider}
+        {provider}
       </ComboboxProvider>
     )
   }
 
-  return menuProvider
+  return provider
+}
+
+interface MenuStateBridgeProps {
+  controlledOpen?: boolean
+  searchable: boolean
+  isRootMenu: boolean
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode
+}
+
+const MenuStateBridge = ({
+  controlledOpen,
+  searchable,
+  isRootMenu,
+  onOpenChange,
+  children,
+}: MenuStateBridgeProps) => {
+  const ariakitMenuStore = Ariakit.useMenuContext()
+  const storeOpen =
+    ariakitMenuStore?.useState?.("open") ??
+    ariakitMenuStore?.getState()?.open ??
+    false
+
+  useEffect(() => {
+    if (!ariakitMenuStore) return
+    if (controlledOpen === undefined) return
+    if (controlledOpen === storeOpen) return
+    if (controlledOpen) {
+      ariakitMenuStore.show?.()
+    } else {
+      ariakitMenuStore.hide?.()
+    }
+  }, [ariakitMenuStore, controlledOpen, storeOpen])
+
+  useEffect(() => {
+    if (!onOpenChange) return
+    onOpenChange(controlledOpen ?? storeOpen)
+  }, [controlledOpen, onOpenChange, storeOpen])
+
+  const menuContextValue = useMemo(
+    () => ({
+      isRootMenu,
+      open: controlledOpen ?? storeOpen,
+    }),
+    [controlledOpen, isRootMenu, storeOpen]
+  )
+
+  return (
+    <MenuContext.Provider value={menuContextValue}>
+      <SearchableContext.Provider value={searchable}>
+        {children}
+      </SearchableContext.Provider>
+    </MenuContext.Provider>
+  )
 }
 
 export function MenuContent({

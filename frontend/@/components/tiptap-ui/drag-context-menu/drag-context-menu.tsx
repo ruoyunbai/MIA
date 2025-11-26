@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import type { Node as TiptapNode } from "@tiptap/pm/model"
 import { offset } from "@floating-ui/react"
 import { DragHandle } from "@tiptap/extension-drag-handle-react"
+import type { Node as TiptapNode } from "@tiptap/pm/model"
 
 // Hooks
+import type {
+  DragContextMenuProps,
+  MenuItemProps,
+  NodeChangeData,
+} from "@/components/tiptap-ui/drag-context-menu/drag-context-menu-types"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useUiEditorState } from "@/hooks/use-ui-editor-state"
@@ -43,10 +48,6 @@ import {
 } from "@/components/tiptap-ui/copy-anchor-link-button"
 import { useResetAllFormatting } from "@/components/tiptap-ui/reset-all-formatting-button"
 import { SlashCommandTriggerButton } from "@/components/tiptap-ui/slash-command-trigger-button"
-import {
-  AskAiShortcutBadge,
-  useAiAsk,
-} from "@/components/tiptap-ui/ai-ask-button"
 import { useText } from "@/components/tiptap-ui/text-button"
 import { useHeading } from "@/components/tiptap-ui/heading-button"
 import { useList } from "@/components/tiptap-ui/list-button"
@@ -64,11 +65,6 @@ import {
 } from "@/lib/tiptap-collab-utils"
 import { SR_ONLY } from "@/lib/tiptap-utils"
 
-import type {
-  DragContextMenuProps,
-  MenuItemProps,
-  NodeChangeData,
-} from "@/components/tiptap-ui/drag-context-menu/drag-context-menu-types"
 
 // Icons
 import { GripVerticalIcon } from "@/components/tiptap-icons/grip-vertical-icon"
@@ -307,29 +303,6 @@ const CoreActionGroup: React.FC = () => {
   )
 }
 
-const AIActionGroup: React.FC = () => {
-  const { handleAiAsk, canAiAsk, Icon: AiAskIcon } = useAiAsk()
-
-  if (!canAiAsk) return null
-
-  return (
-    <>
-      <MenuGroup>
-        {canAiAsk && (
-          <BaseMenuItem
-            icon={AiAskIcon}
-            label="Ask AI"
-            onClick={handleAiAsk}
-            shortcutBadge={<AskAiShortcutBadge />}
-          />
-        )}
-      </MenuGroup>
-
-      <Separator orientation="horizontal" />
-    </>
-  )
-}
-
 const DeleteActionGroup: React.FC = () => {
   const { handleDeleteNode, canDeleteNode, label, Icon } = useDeleteNode()
 
@@ -353,7 +326,7 @@ export const DragContextMenu: React.FC<DragContextMenuProps> = ({
   ...props
 }) => {
   const { editor } = useTiptapEditor(providedEditor)
-  const { aiGenerationActive, isDragging } = useUiEditorState(editor)
+  const { isDragging } = useUiEditorState(editor)
   const isMobile = useIsBreakpoint("max", mobileBreakpoint)
   const [open, setOpen] = useState(false)
   const [node, setNode] = useState<TiptapNode | null>(null)
@@ -436,7 +409,7 @@ export const DragContextMenu: React.FC<DragContextMenuProps> = ({
         <ButtonGroup
           orientation="horizontal"
           style={{
-            ...(aiGenerationActive || isMobile || isTextSelectionValid(editor)
+            ...(isMobile || isTextSelectionValid(editor)
               ? { opacity: 0, pointerEvents: "none" }
               : {}),
             ...(isDragging ? { opacity: 0 } : {}),
@@ -500,7 +473,6 @@ export const DragContextMenu: React.FC<DragContextMenuProps> = ({
 
                 <CoreActionGroup />
 
-                <AIActionGroup />
 
                 <DeleteActionGroup />
               </ComboboxList>

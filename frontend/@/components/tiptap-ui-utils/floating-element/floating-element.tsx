@@ -1,4 +1,3 @@
-import type { HTMLAttributes } from "react"
 import {
   forwardRef,
   useCallback,
@@ -16,6 +15,7 @@ import {
   type UseFloatingOptions,
 } from "@floating-ui/react"
 import { Selection } from "@tiptap/pm/state"
+import type { HTMLAttributes } from "react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
@@ -26,7 +26,6 @@ import {
   getSelectionBoundingRect,
   isSelectionValid,
 } from "@/lib/tiptap-collab-utils"
-
 import { isElementWithinEditor } from "@/components/tiptap-ui-utils/floating-element"
 import { isValidPosition } from "@/lib/tiptap-utils"
 

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   BadRequestException,
   Injectable,
@@ -6,12 +7,11 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import { parseDocument, DomUtils, ElementType } from 'htmlparser2';
-import type { Document, Element, ParentNode } from 'domhandler';
 import { Text } from 'domhandler';
 import { decode } from 'entities';
-import { randomUUID } from 'crypto';
-import type { Browser, Page } from 'playwright';
 import TurndownService from 'turndown';
+import type { Browser, Page } from 'playwright';
+import type { Document, Element, ParentNode } from 'domhandler';
 import type { DocumentParser } from '../interfaces/document-parser.interface';
 import type {
   DocumentOutlineItem,

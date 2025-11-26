@@ -1,20 +1,20 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseMentionTriggerConfig } from "@/components/tiptap-ui/mention-trigger-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseMentionTriggerConfig } from "@/components/tiptap-ui/mention-trigger-button"
 import {
   MENTION_TRIGGER_SHORTCUT_KEY,
   useMentionTrigger,
 } from "@/components/tiptap-ui/mention-trigger-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

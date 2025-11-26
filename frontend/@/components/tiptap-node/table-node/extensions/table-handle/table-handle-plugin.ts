@@ -1,6 +1,3 @@
-import type { Editor } from "@tiptap/core"
-import type { Node as TiptapNode } from "@tiptap/pm/model"
-import type { PluginView, Transaction } from "@tiptap/pm/state"
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state"
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view"
 import {
@@ -9,6 +6,9 @@ import {
   moveTableRow,
   TableMap,
 } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/core"
+import type { Node as TiptapNode } from "@tiptap/pm/model"
+import type { PluginView, Transaction } from "@tiptap/pm/state"
 import {
   clamp,
   domCellAround,

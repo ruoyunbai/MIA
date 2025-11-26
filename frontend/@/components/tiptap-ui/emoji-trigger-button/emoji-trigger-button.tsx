@@ -1,20 +1,20 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseEmojiTriggerConfig } from "@/components/tiptap-ui/emoji-trigger-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseEmojiTriggerConfig } from "@/components/tiptap-ui/emoji-trigger-button"
 import {
   EMOJI_TRIGGER_SHORTCUT_KEY,
   useEmojiTrigger,
 } from "@/components/tiptap-ui/emoji-trigger-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

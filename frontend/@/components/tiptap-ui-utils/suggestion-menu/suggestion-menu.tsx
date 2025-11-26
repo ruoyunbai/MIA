@@ -3,28 +3,27 @@ import { flip, offset, shift, size } from "@floating-ui/react"
 import { PluginKey } from "@tiptap/pm/state"
 
 // --- Hooks ---
-import { useFloatingElement } from "@/hooks/use-floating-element"
-import { useMenuNavigation } from "@/hooks/use-menu-navigation"
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
-
-// --- Tiptap Editor ---
-import type { Range } from "@tiptap/react"
-
-// --- Tiptap UI ---
 import { Suggestion } from "@tiptap/suggestion"
-
-// --- UI Primitives ---
 import {
   SuggestionPluginKey,
   type SuggestionKeyDownProps,
   type SuggestionProps,
 } from "@tiptap/suggestion"
-
-import { calculateStartPosition } from "@/components/tiptap-ui-utils/suggestion-menu/suggestion-menu-utils"
+import type { Range } from "@tiptap/react"
 import type {
   SuggestionItem,
   SuggestionMenuProps,
 } from "@/components/tiptap-ui-utils/suggestion-menu/suggestion-menu-types"
+import { useFloatingElement } from "@/hooks/use-floating-element"
+import { useMenuNavigation } from "@/hooks/use-menu-navigation"
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+
+// --- Tiptap Editor ---
+
+// --- Tiptap UI ---
+
+// --- UI Primitives ---
+import { calculateStartPosition } from "@/components/tiptap-ui-utils/suggestion-menu/suggestion-menu-utils"
 
 /**
  * A component that renders a suggestion menu for Tiptap editors.

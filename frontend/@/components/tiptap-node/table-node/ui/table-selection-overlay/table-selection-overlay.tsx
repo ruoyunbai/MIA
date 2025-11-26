@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import type { Editor } from "@tiptap/react"
 import { CellSelection, cellAround } from "@tiptap/pm/tables"
+import { FloatingPortal, useFloating } from "@floating-ui/react"
+import type { Editor } from "@tiptap/react"
 import type { EditorState, Selection } from "@tiptap/pm/state"
 import type { Node } from "@tiptap/pm/model"
 import type { EditorView } from "@tiptap/pm/view"
-import { FloatingPortal, useFloating } from "@floating-ui/react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"

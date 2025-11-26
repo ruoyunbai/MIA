@@ -1,6 +1,6 @@
 import { useCallback } from "react"
-import type { Editor } from "@tiptap/react"
 import { mergeCells, splitCell } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"

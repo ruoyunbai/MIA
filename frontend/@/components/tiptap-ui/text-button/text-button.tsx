@@ -1,17 +1,17 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseTextConfig } from "@/components/tiptap-ui/text-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTextConfig } from "@/components/tiptap-ui/text-button"
 import { TEXT_SHORTCUT_KEY, useText } from "@/components/tiptap-ui/text-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

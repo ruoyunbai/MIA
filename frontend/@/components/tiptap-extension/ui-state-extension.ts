@@ -1,10 +1,6 @@
 import { Extension } from "@tiptap/core"
 
 export interface UiState {
-  aiGenerationIsSelection: boolean
-  aiGenerationIsLoading: boolean
-  aiGenerationActive: boolean
-  aiGenerationHasMessage: boolean
   commentInputVisible: boolean
   lockDragHandle: boolean
   isDragging: boolean
@@ -13,12 +9,6 @@ export interface UiState {
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     uiState: {
-      aiGenerationSetIsSelection: (value: boolean) => ReturnType
-      aiGenerationSetIsLoading: (value: boolean) => ReturnType
-      aiGenerationShow: () => ReturnType
-      aiGenerationHide: () => ReturnType
-      aiGenerationHasMessage: (value: boolean) => ReturnType
-
       commentInputShow: () => ReturnType
       commentInputHide: () => ReturnType
 
@@ -35,10 +25,6 @@ declare module "@tiptap/core" {
 }
 
 export const defaultUiState: UiState = {
-  aiGenerationIsSelection: false,
-  aiGenerationIsLoading: false,
-  aiGenerationActive: false,
-  aiGenerationHasMessage: false,
   commentInputVisible: false,
   lockDragHandle: false,
   isDragging: false,
@@ -66,15 +52,6 @@ export const UiState = Extension.create<UiState>({
     }
 
     return {
-      // AI Generation commands
-      aiGenerationSetIsSelection: createBooleanSetter(
-        "aiGenerationIsSelection"
-      ),
-      aiGenerationSetIsLoading: createBooleanSetter("aiGenerationIsLoading"),
-      aiGenerationHasMessage: createBooleanSetter("aiGenerationHasMessage"),
-      aiGenerationShow: createToggle("aiGenerationActive", true),
-      aiGenerationHide: createToggle("aiGenerationActive", false),
-
       // Comment input commands
       commentInputShow: createToggle("commentInputVisible", true),
       commentInputHide: createToggle("commentInputVisible", false),

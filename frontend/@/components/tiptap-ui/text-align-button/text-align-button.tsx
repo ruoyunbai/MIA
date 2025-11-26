@@ -1,23 +1,23 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type {
+  TextAlign,
+  UseTextAlignConfig,
+} from "@/components/tiptap-ui/text-align-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type {
-  TextAlign,
-  UseTextAlignConfig,
-} from "@/components/tiptap-ui/text-align-button"
 import {
   TEXT_ALIGN_SHORTCUT_KEYS,
   useTextAlign,
 } from "@/components/tiptap-ui/text-align-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

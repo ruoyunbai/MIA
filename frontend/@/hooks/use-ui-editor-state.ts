@@ -1,5 +1,5 @@
-import type { Editor } from "@tiptap/react"
 import { useEditorState } from "@tiptap/react"
+import type { Editor } from "@tiptap/react"
 import {
   defaultUiState,
   type UiState,

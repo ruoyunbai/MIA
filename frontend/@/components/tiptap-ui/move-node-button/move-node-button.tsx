@@ -1,17 +1,17 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseMoveNodeConfig } from "@/components/tiptap-ui/move-node-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseMoveNodeConfig } from "@/components/tiptap-ui/move-node-button"
 import { useMoveNode } from "@/components/tiptap-ui/move-node-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

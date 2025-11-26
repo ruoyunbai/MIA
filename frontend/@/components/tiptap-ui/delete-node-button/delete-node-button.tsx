@@ -1,20 +1,20 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseDeleteNodeConfig } from "@/components/tiptap-ui/delete-node-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseDeleteNodeConfig } from "@/components/tiptap-ui/delete-node-button"
 import {
   DELETE_NODE_SHORTCUT_KEY,
   useDeleteNode,
 } from "@/components/tiptap-ui/delete-node-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

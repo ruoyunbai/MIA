@@ -1,6 +1,4 @@
 import { useCallback, useMemo } from "react"
-import type { Editor } from "@tiptap/react"
-import type { TableMap } from "@tiptap/pm/tables"
 import {
   CellSelection,
   columnIsHeader,
@@ -9,15 +7,17 @@ import {
   rowIsHeader,
   selectedRect,
 } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/react"
+import type { TableMap } from "@tiptap/pm/tables"
 import type { Transaction } from "@tiptap/pm/state"
 import type { Node } from "@tiptap/pm/model"
 
 // --- Hooks ---
+import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,

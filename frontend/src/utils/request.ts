@@ -46,8 +46,7 @@ request.interceptors.request.use(
 );
 
 // 响应拦截器
-request.interceptors.response.use(
-    (response: AxiosResponse<ApiResponse<unknown>>) => {
+const handleResponse = (response: AxiosResponse<ApiResponse<unknown>>) => {
         // 对响应数据做点什么
         const res: ApiResponse<unknown> = response.data;
 
@@ -74,7 +73,14 @@ request.interceptors.response.use(
 
         // 成功时直接返回 data 数据部分，简化调用方的代码
         return res.data;
-    },
+};
+
+request.interceptors.response.use(
+    // axios 类型定义要求返回 AxiosResponse，但我们希望直接下发 data，
+    // 因此这里通过强制转换绕过类型检查，保持调用方拿到解包后的数据。
+    handleResponse as unknown as (
+        (value: AxiosResponse<ApiResponse<unknown>>) => AxiosResponse<ApiResponse<unknown>> | Promise<AxiosResponse<ApiResponse<unknown>>>
+    ),
     (error: AxiosError) => {
         // 处理响应错误
         console.error('Response Error:', error);

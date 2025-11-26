@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useRef } from "react"
 
 // --- Lib ---
-import { getElementOverflowPosition } from "@/lib/tiptap-collab-utils"
-
-// --- Tiptap UI ---
 import type {
   SuggestionMenuProps,
   SuggestionItem,
   SuggestionMenuRenderProps,
 } from "@/components/tiptap-ui-utils/suggestion-menu"
-import { filterSuggestionItems } from "@/components/tiptap-ui-utils/suggestion-menu"
-import { SuggestionMenu } from "@/components/tiptap-ui-utils/suggestion-menu"
+import type { SlashMenuConfig } from "@/components/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu"
+import { getElementOverflowPosition } from "@/lib/tiptap-collab-utils"
+
+// --- Tiptap UI ---
+import { filterSuggestionItems , SuggestionMenu } from "@/components/tiptap-ui-utils/suggestion-menu"
 
 // --- Hooks ---
-import type { SlashMenuConfig } from "@/components/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu"
 import { useSlashDropdownMenu } from "@/components/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu"
 
 // --- UI Primitives ---

@@ -1,9 +1,12 @@
 "use client"
 
 import { useContext, useEffect } from "react"
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
-import type { Doc as YDoc } from "yjs"
-import type { TiptapCollabProvider } from "@tiptap-pro/provider"
+import {
+  EditorContent,
+  EditorContext,
+  useEditor,
+  type Editor,
+} from "@tiptap/react"
 import { createPortal } from "react-dom"
 
 // --- Tiptap Core Extensions ---
@@ -20,9 +23,10 @@ import { Superscript } from "@tiptap/extension-superscript"
 import { Subscript } from "@tiptap/extension-subscript"
 import { TextAlign } from "@tiptap/extension-text-align"
 import { Mathematics } from "@tiptap/extension-mathematics"
-import { Ai } from "@tiptap-pro/extension-ai"
 import { UniqueID } from "@tiptap/extension-unique-id"
 import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji"
+import type { TiptapCollabProvider } from "@tiptap-pro/provider"
+import type { Doc as YDoc } from "yjs"
 
 // --- Hooks ---
 import { useUiEditorState } from "@/hooks/use-ui-editor-state"
@@ -61,17 +65,14 @@ import { EmojiDropdownMenu } from "@/components/tiptap-ui/emoji-dropdown-menu"
 import { MentionDropdownMenu } from "@/components/tiptap-ui/mention-dropdown-menu"
 import { SlashDropdownMenu } from "@/components/tiptap-ui/slash-dropdown-menu"
 import { DragContextMenu } from "@/components/tiptap-ui/drag-context-menu"
-import { AiMenu } from "@/components/tiptap-ui/ai-menu"
 
 // --- Contexts ---
 import { AppProvider } from "@/contexts/app-context"
 import { UserProvider, useUser } from "@/contexts/user-context"
 import { CollabProvider, useCollab } from "@/contexts/collab-context"
-import { AiProvider, useAi } from "@/contexts/ai-context"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
-import { TIPTAP_AI_APP_ID } from "@/lib/tiptap-collab-utils"
 
 // --- Styles ---
 import "@/components/tiptap-templates/notion-like/notion-like-editor.scss"
@@ -84,13 +85,14 @@ import { NotionToolbarFloating } from "@/components/tiptap-templates/notion-like
 export interface NotionEditorProps {
   room: string
   placeholder?: string
+  onEditorReady?: (editor: Editor | null) => void
 }
 
 export interface EditorProviderProps {
   provider: TiptapCollabProvider
   ydoc: YDoc
   placeholder?: string
-  aiToken: string | null
+  onEditorReady?: (editor: Editor | null) => void
 }
 
 /**
@@ -115,31 +117,7 @@ export function LoadingSpinner({ text = "Connecting..." }: { text?: string }) {
  */
 export function EditorContentArea() {
   const { editor } = useContext(EditorContext)!
-  const {
-    aiGenerationIsLoading,
-    aiGenerationIsSelection,
-    aiGenerationHasMessage,
-    isDragging,
-  } = useUiEditorState(editor)
-
-  // Selection based effect to handle AI generation acceptance
-  useEffect(() => {
-    if (!editor) return
-
-    if (
-      !aiGenerationIsLoading &&
-      aiGenerationIsSelection &&
-      aiGenerationHasMessage
-    ) {
-      editor.chain().focus().aiAccept().run()
-      editor.commands.resetUiState()
-    }
-  }, [
-    aiGenerationHasMessage,
-    aiGenerationIsLoading,
-    aiGenerationIsSelection,
-    editor,
-  ])
+  const { isDragging } = useUiEditorState(editor)
 
   useScrollToHash()
 
@@ -157,7 +135,6 @@ export function EditorContentArea() {
       }}
     >
       <DragContextMenu />
-      <AiMenu />
       <EmojiDropdownMenu />
       <MentionDropdownMenu />
       <SlashDropdownMenu />
@@ -172,7 +149,8 @@ export function EditorContentArea() {
  * Component that creates and provides the editor instance
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const { provider, ydoc, placeholder = "Start writing...", aiToken } = props
+  const { provider, ydoc, placeholder = "Start writing...", onEditorReady } =
+    props
 
   const { user } = useUser()
 
@@ -251,28 +229,15 @@ export function EditorProvider(props: EditorProviderProps) {
       }),
       Typography,
       UiState,
-      Ai.configure({
-        appId: TIPTAP_AI_APP_ID,
-        token: aiToken || undefined,
-        autocompletion: false,
-        showDecorations: true,
-        hideDecorationsOnStreamEnd: false,
-        onLoading: (context) => {
-          context.editor.commands.aiGenerationSetIsLoading(true)
-          context.editor.commands.aiGenerationHasMessage(false)
-        },
-        onChunk: (context) => {
-          context.editor.commands.aiGenerationSetIsLoading(true)
-          context.editor.commands.aiGenerationHasMessage(true)
-        },
-        onSuccess: (context) => {
-          const hasMessage = !!context.response
-          context.editor.commands.aiGenerationSetIsLoading(false)
-          context.editor.commands.aiGenerationHasMessage(hasMessage)
-        },
-      }),
     ],
   })
+
+  useEffect(() => {
+    onEditorReady?.(editor ?? null)
+    return () => {
+      onEditorReady?.(null)
+    }
+  }, [editor, onEditorReady])
 
   if (!editor) {
     return <LoadingSpinner />
@@ -308,28 +273,32 @@ export function EditorProvider(props: EditorProviderProps) {
 export function NotionEditor({
   room,
   placeholder = "Start writing...",
+  onEditorReady,
 }: NotionEditorProps) {
   return (
     <UserProvider>
       <AppProvider>
         <CollabProvider room={room}>
-          <AiProvider>
-            <NotionEditorContent placeholder={placeholder} />
-          </AiProvider>
+          <NotionEditorContent
+            placeholder={placeholder}
+            onEditorReady={onEditorReady}
+          />
         </CollabProvider>
       </AppProvider>
     </UserProvider>
   )
 }
 
-/**
- * Internal component that handles the editor loading state
- */
-export function NotionEditorContent({ placeholder }: { placeholder?: string }) {
+export function NotionEditorContent({
+  placeholder,
+  onEditorReady,
+}: {
+  placeholder?: string
+  onEditorReady?: (editor: Editor | null) => void
+}) {
   const { provider, ydoc } = useCollab()
-  const { aiToken } = useAi()
 
-  if (!provider || !aiToken) {
+  if (!provider) {
     return <LoadingSpinner />
   }
 
@@ -338,7 +307,7 @@ export function NotionEditorContent({ placeholder }: { placeholder?: string }) {
       provider={provider}
       ydoc={ydoc}
       placeholder={placeholder}
-      aiToken={aiToken}
+      onEditorReady={onEditorReady}
     />
   )
 }

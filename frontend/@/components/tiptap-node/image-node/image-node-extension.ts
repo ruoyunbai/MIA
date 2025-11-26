@@ -1,9 +1,9 @@
 import { ReactNodeViewRenderer } from "@tiptap/react"
-import type { ImageOptions } from "@tiptap/extension-image"
 import { Image as TiptapImage } from "@tiptap/extension-image"
-import { ImageNodeView } from "@/components/tiptap-node/image-node/image-node-view"
-import type { Node } from "@tiptap/pm/model"
 import { TextSelection } from "@tiptap/pm/state"
+import type { ImageOptions } from "@tiptap/extension-image"
+import type { Node } from "@tiptap/pm/model"
+import { ImageNodeView } from "@/components/tiptap-node/image-node/image-node-view"
 
 interface ImageAttributes {
   src: string | null

@@ -1,14 +1,14 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Hooks ---
+import type { UseTableClearRowColumnContentConfig } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableClearRowColumnContentConfig } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
 import { useTableClearRowColumnContent } from "@/components/tiptap-node/table-node/ui/table-clear-row-column-content-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 
 export interface TableClearRowColumnContentButtonProps

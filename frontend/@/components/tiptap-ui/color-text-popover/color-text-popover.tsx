@@ -1,6 +1,13 @@
 import { forwardRef, useCallback, useMemo, useRef, useState } from "react"
 
 // --- Hooks ---
+import type {
+  ColorType,
+  ColorItem,
+  RecentColor,
+  UseColorTextPopoverConfig,
+} from "@/components/tiptap-ui/color-text-popover"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { useMenuNavigation } from "@/hooks/use-menu-navigation"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
@@ -8,12 +15,6 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { ChevronDownIcon } from "@/components/tiptap-icons/chevron-down-icon"
 
 // --- Tiptap UI ---
-import type {
-  ColorType,
-  ColorItem,
-  RecentColor,
-  UseColorTextPopoverConfig,
-} from "@/components/tiptap-ui/color-text-popover"
 import {
   useColorTextPopover,
   useRecentColors,
@@ -29,7 +30,6 @@ import {
 } from "@/components/tiptap-ui/color-highlight-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button, ButtonGroup } from "@/components/tiptap-ui-primitive/button"
 import {
   Popover,

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { Editor, NodeViewProps } from "@tiptap/react"
 import { NodeViewWrapper, NodeViewContent } from "@tiptap/react"
 import { NodeSelection } from "@tiptap/pm/state"
-
+import type { Editor, NodeViewProps } from "@tiptap/react"
 import { isValidPosition } from "@/lib/tiptap-utils"
 
 import "./image-node-view.scss"

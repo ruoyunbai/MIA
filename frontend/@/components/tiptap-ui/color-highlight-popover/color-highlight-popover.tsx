@@ -4,6 +4,11 @@ import { forwardRef, useMemo, useRef, useState } from "react"
 import { type Editor } from "@tiptap/react"
 
 // --- Hooks ---
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
+import type {
+  HighlightColor,
+  UseColorHighlightConfig,
+} from "@/components/tiptap-ui/color-highlight-button"
 import { useMenuNavigation } from "@/hooks/use-menu-navigation"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
@@ -13,7 +18,6 @@ import { BanIcon } from "@/components/tiptap-icons/ban-icon"
 import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button, ButtonGroup } from "@/components/tiptap-ui-primitive/button"
 import {
   Popover,
@@ -28,10 +32,6 @@ import {
 } from "@/components/tiptap-ui-primitive/card"
 
 // --- Tiptap UI ---
-import type {
-  HighlightColor,
-  UseColorHighlightConfig,
-} from "@/components/tiptap-ui/color-highlight-button"
 import {
   ColorHighlightButton,
   pickHighlightColorsByValue,

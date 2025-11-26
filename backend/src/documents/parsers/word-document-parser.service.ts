@@ -7,11 +7,6 @@ import {
 import * as mammoth from 'mammoth';
 import WordExtractor from 'word-extractor';
 import { UploadedDocumentFile } from '../interfaces/uploaded-document-file.interface';
-import type { DocumentParser } from '../interfaces/document-parser.interface';
-import type {
-  DocumentOutlineItem,
-  ParsedDocument,
-} from '../interfaces/parsed-document.interface';
 import {
   buildOutlineFromMarkdown,
   buildOutlineFromPlainText,
@@ -27,6 +22,11 @@ import {
   detectDocumentType,
   DocumentFileType,
 } from '../utils/file-signature.util';
+import type {
+  DocumentOutlineItem,
+  ParsedDocument,
+} from '../interfaces/parsed-document.interface';
+import type { DocumentParser } from '../interfaces/document-parser.interface';
 
 @Injectable()
 export class WordDocumentParserService

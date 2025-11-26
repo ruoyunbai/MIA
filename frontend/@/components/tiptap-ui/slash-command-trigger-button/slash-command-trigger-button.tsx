@@ -1,20 +1,20 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseSlashCommandTriggerConfig } from "@/components/tiptap-ui/slash-command-trigger-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseSlashCommandTriggerConfig } from "@/components/tiptap-ui/slash-command-trigger-button"
 import {
   SLASH_COMMAND_TRIGGER_SHORTCUT_KEY,
   useSlashCommandTrigger,
 } from "@/components/tiptap-ui/slash-command-trigger-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

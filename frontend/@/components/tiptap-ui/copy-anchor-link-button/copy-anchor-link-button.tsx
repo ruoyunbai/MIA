@@ -3,20 +3,20 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseCopyAnchorLinkConfig } from "@/components/tiptap-ui/copy-anchor-link-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseCopyAnchorLinkConfig } from "@/components/tiptap-ui/copy-anchor-link-button"
 import {
   COPY_ANCHOR_LINK_SHORTCUT_KEY,
   useCopyAnchorLink,
 } from "@/components/tiptap-ui/copy-anchor-link-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

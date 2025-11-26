@@ -1,16 +1,16 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import type { Editor } from "@tiptap/react"
 import { deleteRow, deleteColumn, CellSelection } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/react"
 import type { Transaction } from "@tiptap/pm/state"
 
 // --- Hooks ---
+import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,

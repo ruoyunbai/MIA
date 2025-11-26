@@ -26,7 +26,6 @@ import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { SlashCommandTriggerButton } from "@/components/tiptap-ui/slash-command-trigger-button"
 import { ResetAllFormattingButton } from "@/components/tiptap-ui/reset-all-formatting-button"
 import { DeleteNodeButton } from "@/components/tiptap-ui/delete-node-button"
-import { ImproveDropdown } from "@/components/tiptap-ui/improve-dropdown"
 import { CopyAnchorLinkButton } from "@/components/tiptap-ui/copy-anchor-link-button"
 import { TurnIntoDropdownContent } from "@/components/tiptap-ui/turn-into-dropdown"
 import { useRecentColors } from "@/components/tiptap-ui/color-text-popover"
@@ -39,7 +38,6 @@ import {
   ColorHighlightButton,
   HIGHLIGHT_COLORS,
 } from "@/components/tiptap-ui/color-highlight-button"
-import { AiAskButton } from "@/components/tiptap-ui/ai-ask-button"
 import { DuplicateButton } from "@/components/tiptap-ui/duplicate-button"
 import { CopyToClipboardButton } from "@/components/tiptap-ui/copy-to-clipboard-button"
 
@@ -417,14 +415,6 @@ function DropdownMenuActions({ editor }: DropdownMenuActionsProps) {
 
         <ButtonGroup>
           <DropdownMenuItem asChild>
-            <AiAskButton text="Ask AI" showShortcut={!isMobile} />
-          </DropdownMenuItem>
-        </ButtonGroup>
-
-        <Separator orientation="horizontal" />
-
-        <ButtonGroup>
-          <DropdownMenuItem asChild>
             <DeleteNodeButton text="Delete" showShortcut={!isMobile} />
           </DropdownMenuItem>
         </ButtonGroup>
@@ -552,12 +542,6 @@ function MainToolbarContent({
 
       {(hasSelection || hasContent) && (
         <>
-          <ToolbarGroup>
-            <ImproveDropdown portal={true} hideWhenUnavailable />
-          </ToolbarGroup>
-
-          <ToolbarSeparator />
-
           <FormattingGroup />
 
           <ToolbarViewsGroup

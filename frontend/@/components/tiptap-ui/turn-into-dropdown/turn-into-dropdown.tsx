@@ -2,6 +2,7 @@ import { forwardRef } from "react"
 
 // --- Tiptap UI ---
 import type { UseTurnIntoDropdownConfig } from "@/components/tiptap-ui/turn-into-dropdown"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import {
   useTurnIntoDropdown,
   getFilteredBlockTypeOptions,
@@ -18,7 +19,6 @@ import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button, ButtonGroup } from "@/components/tiptap-ui-primitive/button"
 import {
   DropdownMenu,

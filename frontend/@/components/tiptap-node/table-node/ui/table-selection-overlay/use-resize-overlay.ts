@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from "react"
-import type { Editor } from "@tiptap/react"
 import { columnResizingPluginKey } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/react"
 import type { Transaction } from "@tiptap/pm/state"
 
 export function useResizeOverlay(

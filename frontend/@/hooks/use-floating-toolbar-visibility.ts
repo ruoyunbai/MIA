@@ -104,8 +104,10 @@ export function useFloatingToolbarVisibility(params: {
  * @param pos
  */
 export const selectNodeAndHideFloating = (editor: Editor, pos: number) => {
+  console.log("selectNodeAndHideFloating", { pos })
   if (!editor) return
   const { state, view } = editor
+  console.log("selectNodeAndHideFloating state", { state })
   view.dispatch(
     state.tr
       .setSelection(NodeSelection.create(state.doc, pos))

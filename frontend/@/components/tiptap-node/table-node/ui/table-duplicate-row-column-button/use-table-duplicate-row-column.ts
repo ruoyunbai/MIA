@@ -1,15 +1,15 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import type { Editor } from "@tiptap/react"
 import { addColumnAfter, addRowAfter, CellSelection } from "@tiptap/pm/tables"
+import type { Editor } from "@tiptap/react"
 
 // --- Hooks ---
+import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import {
   getTable,
   getTableSelectionType,

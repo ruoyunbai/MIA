@@ -1,20 +1,20 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { UseResetAllFormattingConfig } from "@/components/tiptap-ui/reset-all-formatting-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseResetAllFormattingConfig } from "@/components/tiptap-ui/reset-all-formatting-button"
 import {
   RESET_ALL_FORMATTING_SHORTCUT_KEY,
   useResetAllFormatting,
 } from "@/components/tiptap-ui/reset-all-formatting-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

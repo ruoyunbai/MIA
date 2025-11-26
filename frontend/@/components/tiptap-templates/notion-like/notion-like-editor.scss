@@ -72,6 +72,10 @@ body,
   flex: 1;
 }
 
+.notion-like-editor-wrapper {
+  --drag-handle-main-axis-offset: 56px;
+}
+
 .notion-like-editor-content .tiptap.ProseMirror.notion-like-editor {
   flex: 1;
   padding: 3rem 3rem 30vh;

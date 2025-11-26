@@ -1,10 +1,9 @@
-import type { Attrs, Node } from "@tiptap/pm/model"
-import { findNodePosition, isValidPosition } from "@/lib/tiptap-utils"
-import type { NodeWithPos } from "@tiptap/react"
-import { findParentNodeClosestToPos, type Editor } from "@tiptap/react"
-import type { Selection } from "@tiptap/pm/state"
+import { findParentNodeClosestToPos, type Editor , NodeWithPos } from "@tiptap/react"
 import { NodeSelection, TextSelection } from "@tiptap/pm/state"
 import { cellAround, CellSelection } from "@tiptap/pm/tables"
+import type { Selection } from "@tiptap/pm/state"
+import type { Attrs, Node } from "@tiptap/pm/model"
+import { findNodePosition, isValidPosition } from "@/lib/tiptap-utils"
 
 /**
  * Splits an array into chunks of specified size

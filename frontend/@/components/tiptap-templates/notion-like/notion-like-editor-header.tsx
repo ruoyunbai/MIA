@@ -11,8 +11,6 @@ import { ButtonGroup } from "@/components/tiptap-ui-primitive/button"
 // --- Styles ---
 import "@/components/tiptap-templates/notion-like/notion-like-editor-header.scss"
 
-import { CollaborationUsers } from "@/components/tiptap-templates/notion-like/notion-like-editor-collaboration-users"
-
 export function NotionEditorHeader() {
   return (
     <header className="notion-like-editor-header">
@@ -27,9 +25,6 @@ export function NotionEditorHeader() {
 
         <ThemeToggle />
 
-        <Separator />
-
-        <CollaborationUsers />
       </div>
     </header>
   )

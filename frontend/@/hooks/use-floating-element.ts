@@ -1,10 +1,5 @@
 "use client"
 
-import type {
-  AutoUpdateOptions,
-  UseDismissProps,
-  UseFloatingOptions,
-} from "@floating-ui/react"
 import {
   autoUpdate,
   useDismiss,
@@ -13,6 +8,11 @@ import {
   useTransitionStyles,
 } from "@floating-ui/react"
 import { useEffect, useMemo } from "react"
+import type {
+  AutoUpdateOptions,
+  UseDismissProps,
+  UseFloatingOptions,
+} from "@floating-ui/react"
 
 interface FloatingElementReturn {
   /**

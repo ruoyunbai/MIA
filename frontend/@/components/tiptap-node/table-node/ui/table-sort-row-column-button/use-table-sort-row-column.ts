@@ -3,11 +3,11 @@ import type { Editor } from "@tiptap/react"
 import type { Node } from "@tiptap/pm/model"
 
 // --- Hooks ---
+import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import { isExtensionAvailable } from "@/lib/tiptap-utils"
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import {
   type CellInfo,
   getTable,

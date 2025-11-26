@@ -1,11 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import type { Editor } from "@tiptap/react"
 import { useHotkeys } from "react-hotkeys-hook"
-import type { Transaction } from "@tiptap/pm/state"
 import { TextSelection } from "@tiptap/pm/state"
 import { Fragment, Slice } from "@tiptap/pm/model"
+import type { Transaction } from "@tiptap/pm/state"
+import type { Editor } from "@tiptap/react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"

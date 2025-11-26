@@ -1,20 +1,20 @@
 import { forwardRef, useCallback, useMemo } from "react"
 
 // --- Lib ---
+import type { UseColorTextConfig } from "@/components/tiptap-ui/color-text-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseColorTextConfig } from "@/components/tiptap-ui/color-text-button"
 import {
   COLOR_TEXT_SHORTCUT_KEY,
   useColorText,
 } from "@/components/tiptap-ui/color-text-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

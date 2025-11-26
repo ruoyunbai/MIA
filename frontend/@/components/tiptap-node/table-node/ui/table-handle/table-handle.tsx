@@ -1,11 +1,10 @@
 "use client"
 
 import { useCallback, useMemo, useState } from "react"
+import { FloatingPortal } from "@floating-ui/react"
 import type { Editor } from "@tiptap/react"
 import type { ComponentType } from "react"
-import { FloatingPortal } from "@floating-ui/react"
 import type { Node } from "@tiptap/pm/model"
-
 import {
   colDragStart,
   rowDragStart,

@@ -3,14 +3,14 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Hooks ---
+import type { UseTableMergeSplitCellConfig } from "@/components/tiptap-node/table-node/ui/table-merge-split-cell-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { UseTableMergeSplitCellConfig } from "@/components/tiptap-node/table-node/ui/table-merge-split-cell-button"
 import { useTableMergeSplitCell } from "@/components/tiptap-node/table-node/ui/table-merge-split-cell-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 
 export interface TableMergeSplitCellButtonProps

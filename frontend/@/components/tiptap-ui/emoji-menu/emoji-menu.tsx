@@ -13,7 +13,6 @@ import { getElementOverflowPosition } from "@/lib/tiptap-collab-utils"
 import { Button, ButtonGroup } from "@/components/tiptap-ui-primitive/button"
 import { Input } from "@/components/tiptap-ui-primitive/input"
 import { Card, CardBody, CardHeader } from "@/components/tiptap-ui-primitive/card"
-
 import { getFilteredEmojis } from "@/components/tiptap-ui/emoji-menu/emoji-menu-utils"
 
 // --- Styles ---

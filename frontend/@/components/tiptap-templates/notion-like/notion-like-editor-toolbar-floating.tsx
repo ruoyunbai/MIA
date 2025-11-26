@@ -2,6 +2,9 @@ import { useEffect, useState } from "react"
 import { type Editor } from "@tiptap/react"
 
 // --- Hooks ---
+import type { Mark } from "@/components/tiptap-ui/mark-button"
+import type { TextAlign } from "@/components/tiptap-ui/text-align-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { useUiEditorState } from "@/hooks/use-ui-editor-state"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
@@ -15,11 +18,8 @@ import { MoreVerticalIcon } from "@/components/tiptap-icons/more-vertical-icon"
 
 // --- UI ---
 import { ColorTextPopover } from "@/components/tiptap-ui/color-text-popover"
-import { ImproveDropdown } from "@/components/tiptap-ui/improve-dropdown"
 import { LinkPopover } from "@/components/tiptap-ui/link-popover"
-import type { Mark } from "@/components/tiptap-ui/mark-button"
 import { canToggleMark, MarkButton } from "@/components/tiptap-ui/mark-button"
-import type { TextAlign } from "@/components/tiptap-ui/text-align-button"
 import {
   canSetTextAlign,
   TextAlignButton,
@@ -30,7 +30,6 @@ import { TurnIntoDropdown } from "@/components/tiptap-ui/turn-into-dropdown"
 import { isSelectionValid } from "@/lib/tiptap-collab-utils"
 
 // --- Primitive UI Components ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import {
   Popover,
@@ -49,13 +48,13 @@ import { FloatingElement } from "@/components/tiptap-ui-utils/floating-element"
 export function NotionToolbarFloating() {
   const { editor } = useTiptapEditor()
   const isMobile = useIsBreakpoint("max", 480)
-  const { lockDragHandle, aiGenerationActive, commentInputVisible } =
+  const { lockDragHandle, commentInputVisible } =
     useUiEditorState(editor)
 
   const { shouldShow } = useFloatingToolbarVisibility({
     editor,
     isSelectionValid,
-    extraHideWhen: Boolean(aiGenerationActive || commentInputVisible),
+    extraHideWhen: Boolean(commentInputVisible),
   })
 
   if (lockDragHandle || isMobile) return null
@@ -63,12 +62,6 @@ export function NotionToolbarFloating() {
   return (
     <FloatingElement shouldShow={shouldShow}>
       <Toolbar variant="floating">
-        <ToolbarGroup>
-          <ImproveDropdown hideWhenUnavailable={true} />
-        </ToolbarGroup>
-
-        <ToolbarSeparator />
-
         <ToolbarGroup>
           <TurnIntoDropdown hideWhenUnavailable={true} />
         </ToolbarGroup>

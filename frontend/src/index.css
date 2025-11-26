@@ -78,6 +78,20 @@ a {
   min-height: 100vh;
 }
 
+.kb-editor-drawer .arco-drawer {
+  max-width: 100%;
+}
+
+.kb-editor-drawer .arco-drawer-body {
+  padding: 0;
+  height: 100vh;
+  background: transparent;
+}
+
+body.kb-editor-open {
+  overflow: hidden;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

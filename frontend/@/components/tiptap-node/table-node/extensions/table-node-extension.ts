@@ -1,13 +1,5 @@
-import type { ViewMutationRecord } from "@tiptap/pm/view"
 import { Table } from "@tiptap/extension-table/table"
-import type {
-  TableCellOptions,
-  TableHeaderOptions,
-  TableOptions,
-  TableRowOptions,
-} from "@tiptap/extension-table"
 import { TableCell, TableHeader, TableRow } from "@tiptap/extension-table"
-import type { Node } from "@tiptap/pm/model"
 import { Extension } from "@tiptap/core"
 import {
   cellAround,
@@ -16,7 +8,14 @@ import {
   TableView,
 } from "@tiptap/pm/tables"
 import { TextSelection } from "@tiptap/pm/state"
-
+import type { Node } from "@tiptap/pm/model"
+import type {
+  TableCellOptions,
+  TableHeaderOptions,
+  TableOptions,
+  TableRowOptions,
+} from "@tiptap/extension-table"
+import type { ViewMutationRecord } from "@tiptap/pm/view"
 import {
   EMPTY_CELL_WIDTH,
   RESIZE_MIN_WIDTH,

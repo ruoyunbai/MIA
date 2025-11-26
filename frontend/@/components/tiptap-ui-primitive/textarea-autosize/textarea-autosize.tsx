@@ -1,6 +1,6 @@
 import { useState } from "react"
-import type { TextareaAutosizeProps } from "react-textarea-autosize"
 import ReactTextareaAutosize from "react-textarea-autosize"
+import type { TextareaAutosizeProps } from "react-textarea-autosize"
 
 // -- Hooks --
 import { useIsomorphicLayoutEffect } from "@/hooks/use-isomorphic-layout-effect"

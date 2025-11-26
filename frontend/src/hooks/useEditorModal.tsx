@@ -1,4 +1,5 @@
-import { useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
+import { Drawer } from '@arco-design/web-react';
 import { RichTextEditor } from '../components/RichTextEditor';
 
 export interface EditorModalState {
@@ -34,18 +35,40 @@ export function useEditorModal(): UseEditorModalResult {
     setEditorState(null);
   };
 
-  const EditorModal =
-    editorState?.isOpen === true ? (
-      <RichTextEditor
-        title={editorState.title}
-        initialContent={editorState.content}
-        onSave={(content) => {
-          editorState.onSave(content);
-          closeEditor();
-        }}
-        onCancel={closeEditor}
-      />
-    ) : null;
+  const isOpen = editorState?.isOpen === true;
+
+  useEffect(() => {
+    document.body.classList.toggle('kb-editor-open', isOpen);
+    return () => document.body.classList.remove('kb-editor-open');
+  }, [isOpen]);
+
+  const EditorModal = (
+    <Drawer
+      className="kb-editor-drawer"
+      placement="right"
+      width="100%"
+      visible={isOpen}
+      footer={null}
+      closable={false}
+      title={null}
+      headerStyle={{ display: 'none' }}
+      maskClosable={false}
+      unmountOnExit
+      onCancel={closeEditor}
+    >
+      {isOpen && editorState ? (
+        <RichTextEditor
+          title={editorState.title}
+          initialContent={editorState.content}
+          onSave={(content) => {
+            editorState.onSave(content);
+            closeEditor();
+          }}
+          onCancel={closeEditor}
+        />
+      ) : null}
+    </Drawer>
+  );
 
   return {
     editorState,

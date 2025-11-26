@@ -1,23 +1,23 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type {
+  ImageAlign,
+  UseImageAlignConfig,
+} from "@/components/tiptap-ui/image-align-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type {
-  ImageAlign,
-  UseImageAlignConfig,
-} from "@/components/tiptap-ui/image-align-button"
 import {
   IMAGE_ALIGN_SHORTCUT_KEYS,
   useImageAlign,
 } from "@/components/tiptap-ui/image-align-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

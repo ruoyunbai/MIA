@@ -5,8 +5,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import pdfParse from 'pdf-parse';
-import type { DocumentParser } from '../interfaces/document-parser.interface';
-import type { ParsedDocument } from '../interfaces/parsed-document.interface';
 import { UploadedDocumentFile } from '../interfaces/uploaded-document-file.interface';
 import {
   buildOutlineFromPlainText,
@@ -21,7 +19,8 @@ import {
   detectDocumentType,
   DocumentFileType,
 } from '../utils/file-signature.util';
-import type { DocumentOutlineItem } from '../interfaces/parsed-document.interface';
+import type { ParsedDocument , DocumentOutlineItem } from '../interfaces/parsed-document.interface';
+import type { DocumentParser } from '../interfaces/document-parser.interface';
 
 const PDF_WORKER_SRC = require.resolve(
   'pdfjs-dist/legacy/build/pdf.worker.mjs',

@@ -1,17 +1,17 @@
 import { forwardRef, useCallback } from "react"
 
 // --- Lib ---
+import type { Mark, UseMarkConfig } from "@/components/tiptap-ui/mark-button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Tiptap UI ---
-import type { Mark, UseMarkConfig } from "@/components/tiptap-ui/mark-button"
 import { MARK_SHORTCUT_KEYS, useMark } from "@/components/tiptap-ui/mark-button"
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
 import { Badge } from "@/components/tiptap-ui-primitive/badge"
 

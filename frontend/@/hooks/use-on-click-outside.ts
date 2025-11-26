@@ -1,7 +1,7 @@
 "use client"
 
-import type { RefObject } from "react"
 import { useEffect, useRef } from "react"
+import type { RefObject } from "react"
 import { useIsomorphicLayoutEffect } from "@/hooks/use-isomorphic-layout-effect"
 
 // MediaQueryList Event based useEventListener interface

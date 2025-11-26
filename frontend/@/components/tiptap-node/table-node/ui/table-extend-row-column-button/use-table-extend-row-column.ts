@@ -1,4 +1,3 @@
-import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 import {
   offset,
   size,
@@ -7,6 +6,7 @@ import {
   type Placement,
 } from "@floating-ui/react"
 import { useEffect, useMemo, useCallback } from "react"
+import type { Orientation } from "@/components/tiptap-node/table-node/lib/tiptap-table-utils"
 
 interface TableExtendRowColumnButtonPositionResult {
   isMounted: boolean

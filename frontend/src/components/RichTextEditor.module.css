@@ -1,5 +1,6 @@
 .editorShell {
   min-height: 100vh;
+  width: 100%;
   background: #f5f7fb;
   display: flex;
   flex-direction: column;
@@ -12,13 +13,13 @@
 }
 
 .headerInner {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 1rem;
+  width: 100%;
+  padding: 1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  box-sizing: border-box;
 }
 
 .titleGroup h1 {
@@ -64,23 +65,43 @@
 
 .editorArea {
   flex: 1;
-  max-width: 900px;
-  margin: 1.5rem auto;
-  width: calc(100% - 2rem);
-  border-radius: 18px;
-  background: white;
+  width: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.editorArea :global(.notion-like-editor-wrapper) {
+  border-radius: 12px;
   border: 1px solid var(--color-border);
+  overflow: hidden;
+  background: white;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
-.textarea {
-  width: 100%;
-  min-height: calc(100vh - 200px);
-  border: none;
+.blockNoteContainer {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  min-height: 520px;
   padding: 1.5rem;
-  font-size: 1rem;
-  line-height: 1.7;
-  border-radius: 18px;
-  resize: none;
-  outline: none;
+  box-sizing: border-box;
+}
+
+.editorNotice {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 0.9rem;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
