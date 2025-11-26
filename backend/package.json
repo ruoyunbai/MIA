@@ -38,14 +38,19 @@
     "html-to-markdown": "^1.0.0",
     "langchain": "^1.1.0",
     "llamaindex": "^0.12.0",
+    "mammoth": "^1.11.0",
     "mysql2": "^3.15.3",
     "openai": "^6.9.1",
+    "pdf-parse": "^1.1.1",
+    "pdf-to-markdown-converter": "^1.20.6",
+    "pdfjs-dist": "^5.4.394",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "turndown": "^7.2.2",
     "turndown-plugin-gfm": "^1.0.2",
-    "typeorm": "^0.3.27"
+    "typeorm": "^0.3.27",
+    "word-extractor": "^1.0.4"
   },
   "overrides": {
     "@browserbasehq/stagehand": {

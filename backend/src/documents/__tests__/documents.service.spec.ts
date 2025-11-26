@@ -5,6 +5,9 @@ import COS from 'cos-nodejs-sdk-v5';
 import * as dotenv from 'dotenv';
 import { DocumentsService } from '../documents.service';
 import { UploadedDocumentFile } from '../interfaces/uploaded-document-file.interface';
+import { WebArticleParserService } from '../parsers/web-article-parser.service';
+import { PdfDocumentParserService } from '../parsers/pdf-document-parser.service';
+import { WordDocumentParserService } from '../parsers/word-document-parser.service';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -23,7 +26,12 @@ describeDocuments('DocumentsService (COS integration)', () => {
   const uploadedKeys: string[] = [];
 
   beforeAll(() => {
-    service = new DocumentsService(new ConfigService());
+    service = new DocumentsService(
+      new ConfigService(),
+      new WebArticleParserService(),
+      new PdfDocumentParserService(),
+      new WordDocumentParserService(),
+    );
   });
 
   afterAll(async () => {

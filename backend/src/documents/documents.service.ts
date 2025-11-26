@@ -14,6 +14,8 @@ import {
 import { SUPPORTED_DOCUMENT_MIME_SET } from './documents.constants';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
 import { WebArticleParserService } from './parsers/web-article-parser.service';
+import { PdfDocumentParserService } from './parsers/pdf-document-parser.service';
+import { WordDocumentParserService } from './parsers/word-document-parser.service';
 
 @Injectable()
 export class DocumentsService {
@@ -25,6 +27,8 @@ export class DocumentsService {
   constructor(
     private readonly configService: ConfigService,
     private readonly webArticleParser: WebArticleParserService,
+    private readonly pdfDocumentParser: PdfDocumentParserService,
+    private readonly wordDocumentParser: WordDocumentParserService,
   ) {
     const secretId = this.configService.get<string>('COS_SECRET_ID');
     const secretKey = this.configService.get<string>('COS_SECRET_KEY');
@@ -79,6 +83,37 @@ export class DocumentsService {
   async parseWebArticle(url: string) {
     const result = await this.webArticleParser.parse(url);
     return result;
+  }
+
+  async parsePdfDocument(file: UploadedDocumentFile) {
+    if (!file) {
+      throw new BadRequestException('请上传需要解析的 PDF 文档');
+    }
+    if (!file.buffer?.length) {
+      throw new BadRequestException('文件内容为空，无法解析');
+    }
+    const detectedType = detectDocumentType(file.buffer);
+    if (detectedType !== DocumentFileType.PDF) {
+      throw new BadRequestException('仅支持标准 PDF 文档解析');
+    }
+    return this.pdfDocumentParser.parse(file);
+  }
+
+  async parseWordDocument(file: UploadedDocumentFile) {
+    if (!file) {
+      throw new BadRequestException('请上传需要解析的 Word 文档');
+    }
+    if (!file.buffer?.length) {
+      throw new BadRequestException('文件内容为空，无法解析');
+    }
+    const detectedType = detectDocumentType(file.buffer);
+    if (
+      detectedType !== DocumentFileType.DOC &&
+      detectedType !== DocumentFileType.DOCX
+    ) {
+      throw new BadRequestException('仅支持 .doc/.docx 文档解析');
+    }
+    return this.wordDocumentParser.parse(file);
   }
 
   private ensureCosClient() {

@@ -62,4 +62,48 @@ export class DocumentsController {
   parseWebArticle(@Body() payload: ParseWebArticleDto) {
     return this.documentsService.parseWebArticle(payload.url);
   }
+
+  @Post('parse-pdf')
+  @ApiOperation({ summary: '解析 PDF 文档为 Markdown/纯文本' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: MEMORY_STORAGE,
+      limits: { fileSize: MAX_UPLOAD_SIZE },
+    }),
+  )
+  parsePdf(@UploadedFile() file: UploadedDocumentFile) {
+    return this.documentsService.parsePdfDocument(file);
+  }
+
+  @Post('parse-word')
+  @ApiOperation({ summary: '解析 Word 文档为 Markdown/纯文本' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: MEMORY_STORAGE,
+      limits: { fileSize: MAX_UPLOAD_SIZE },
+    }),
+  )
+  parseWord(@UploadedFile() file: UploadedDocumentFile) {
+    return this.documentsService.parseWordDocument(file);
+  }
 }
