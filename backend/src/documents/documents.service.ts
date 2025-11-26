@@ -13,6 +13,7 @@ import {
 } from './utils/file-signature.util';
 import { SUPPORTED_DOCUMENT_MIME_SET } from './documents.constants';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
+import { WebArticleParserService } from './parsers/web-article-parser.service';
 
 @Injectable()
 export class DocumentsService {
@@ -21,7 +22,10 @@ export class DocumentsService {
   private readonly bucket?: string;
   private readonly region?: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly webArticleParser: WebArticleParserService,
+  ) {
     const secretId = this.configService.get<string>('COS_SECRET_ID');
     const secretKey = this.configService.get<string>('COS_SECRET_KEY');
     this.bucket = this.configService.get<string>('COS_BUCKET');
@@ -70,6 +74,11 @@ export class DocumentsService {
     this.ensureCosClient();
     const url = await this.createSignedUrl(key, expiresIn);
     return { key, url };
+  }
+
+  async parseWebArticle(url: string) {
+    const result = await this.webArticleParser.parse(url);
+    return result;
   }
 
   private ensureCosClient() {
@@ -171,4 +180,5 @@ export class DocumentsService {
       );
     });
   }
+
 }

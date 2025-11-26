@@ -13,6 +13,7 @@ import { memoryStorage } from 'multer';
 import { DocumentsService } from './documents.service';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { GetDownloadUrlDto } from './dto/get-download-url.dto';
+import { ParseWebArticleDto } from './dto/parse-web-article.dto';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
 import type { StorageEngine } from 'multer';
 
@@ -54,5 +55,11 @@ export class DocumentsController {
   @ApiOperation({ summary: '获取 COS 文档的签名下载链接' })
   getDownloadUrl(@Query() query: GetDownloadUrlDto) {
     return this.documentsService.getDownloadUrl(query.key, query.expiresIn);
+  }
+
+  @Post('parse-web-article')
+  @ApiOperation({ summary: '解析小店课堂文章为 Markdown/纯文本' })
+  parseWebArticle(@Body() payload: ParseWebArticleDto) {
+    return this.documentsService.parseWebArticle(payload.url);
   }
 }

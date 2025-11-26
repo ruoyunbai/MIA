@@ -51,6 +51,11 @@
 
 上传接口会拦截并拒绝非 PDF/Word 的 MIME 或非法文件头（例如伪装的脚本），同时会把 `\`、`..` 等目录逃逸字符清理掉后再写入 COS。
 
+### 网页文章解析
+
+- `POST /documents/parse-web-article`  
+  入参 `url`（当前限定 `school.jinritemai.com` 域名文章），服务端会抓取文章结构，返回 Markdown、纯文本、目录（Outline）与元数据，可直接用于前端富文本展示或二次加工。页面若依赖前端渲染，会自动退回到 Playwright 无头浏览器等待内容加载，首次使用前请执行 `npx playwright install chromium` 安装浏览器依赖。
+
 ## Project setup
 
 ```bash
