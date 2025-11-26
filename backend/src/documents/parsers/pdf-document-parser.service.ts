@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import {
   BadRequestException,
   Injectable,
@@ -19,11 +20,15 @@ import {
   detectDocumentType,
   DocumentFileType,
 } from '../utils/file-signature.util';
-import type { ParsedDocument , DocumentOutlineItem } from '../interfaces/parsed-document.interface';
+import type {
+  ParsedDocument,
+  DocumentOutlineItem,
+} from '../interfaces/parsed-document.interface';
 import type { DocumentParser } from '../interfaces/document-parser.interface';
 
-const PDF_WORKER_SRC = require.resolve(
-  'pdfjs-dist/legacy/build/pdf.worker.mjs',
+const PDF_WORKER_SRC = join(
+  __dirname,
+  '../../../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
 );
 
 @Injectable()

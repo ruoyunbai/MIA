@@ -1,6 +1,7 @@
 const INVALID_TITLE_VALUE = /^blob$/i;
-const CONTROL_CHAR_TEST_REGEX = /[\u0000-\u001f\u007f-\u009f]/;
-const CONTROL_CHAR_REPLACE_REGEX = /[\u0000-\u001f\u007f-\u009f]/g;
+const CONTROL_CHAR_RANGE = String.raw`\u0000-\u001F\u007F-\u009F`;
+const CONTROL_CHAR_TEST_REGEX = new RegExp(`[${CONTROL_CHAR_RANGE}]`);
+const CONTROL_CHAR_REPLACE_REGEX = new RegExp(`[${CONTROL_CHAR_RANGE}]`, 'g');
 const READABLE_CHAR_REGEX = /[\u4e00-\u9fa5A-Za-z0-9]/;
 const MIME_WORD_REGEX = /=\?([^?]+)\?([bBqQ])\?([^?]+)\?=/;
 const REPLACEMENT_CHAR_REGEX = /\uFFFD/g;

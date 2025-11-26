@@ -1,6 +1,3 @@
-@import '../@/styles/_variables.scss';
-@import '../@/styles/_keyframe-animations.scss';
-
 :root {
   font-family: 'Inter', 'PingFang SC', 'Microsoft Yahei', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;

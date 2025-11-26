@@ -1,3 +1,5 @@
+const path = require('node:path');
+
 module.exports = {
   root: true,
   env: {
@@ -54,8 +56,15 @@ module.exports = {
       },
       plugins: ['n'],
       extends: ['plugin:n/recommended'],
+      settings: {
+        node: {
+          tryExtensions: ['.js', '.mjs', '.ts', '.tsx', '.json'],
+          resolvePaths: [path.resolve(__dirname, 'backend/node_modules')]
+        }
+      },
       rules: {
-        'n/no-missing-import': 'off'
+        'n/no-missing-import': 'off',
+        'n/no-missing-require': 'error'
       }
     },
     {

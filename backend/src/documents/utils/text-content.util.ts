@@ -2,6 +2,7 @@ import { DocumentOutlineItem } from '../interfaces/parsed-document.interface';
 
 const CHINESE_NUMERAL = '一二三四五六七八九十百千';
 const MAX_OUTLINE_ITEMS = 100;
+const NULL_CHAR_REGEX = new RegExp(String.raw`\u0000`, 'g');
 
 export function normalizePlainText(input: string) {
   if (!input) {
@@ -10,7 +11,7 @@ export function normalizePlainText(input: string) {
   return input
     .replace(/\r\n/g, '\n')
     .replace(/\f/g, '\n')
-    .replace(/\u0000/g, '')
+    .replace(NULL_CHAR_REGEX, '')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
