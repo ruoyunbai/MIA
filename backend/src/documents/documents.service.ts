@@ -9,6 +9,9 @@ import { IngestWebArticleDto } from './dto/ingest-web-article.dto';
 import { DocumentIngestionQueueService } from './services/document-ingestion-queue.service';
 import { DocumentIngestionEventsService } from './services/document-ingestion-events.service';
 import { SearchDocumentsDto } from './dto/search-documents.dto';
+import { UpdateDocumentDto } from './dto/update-document.dto';
+import { QueryDocumentsDto } from './dto/query-documents.dto';
+import { DocumentResponseDto } from './dto/document-response.dto';
 import {
   detectDocumentType,
   DocumentFileType,
@@ -118,6 +121,46 @@ export class DocumentsService {
       payload.query,
       payload.limit,
     );
+  }
+
+  async listDocuments(userId: number, query: QueryDocumentsDto) {
+    const result = await this.ingestionService.listDocuments(query, userId);
+    return {
+      ...result,
+      items: DocumentResponseDto.fromEntities(result.items),
+    };
+  }
+
+  async getDocument(documentId: number, userId: number) {
+    const document = await this.ingestionService.getDocument(documentId, userId);
+    return DocumentResponseDto.fromEntity(document);
+  }
+
+  async updateDocument(
+    documentId: number,
+    userId: number,
+    payload: UpdateDocumentDto,
+  ) {
+    const document = await this.ingestionService.updateDocument(
+      documentId,
+      userId,
+      payload,
+    );
+    return DocumentResponseDto.fromEntity(document);
+  }
+
+  async deleteDocument(documentId: number, userId: number) {
+    const document = await this.ingestionService.getDocument(
+      documentId,
+      userId,
+    );
+    await this.ingestionService.purgeDocumentChunks(documentId);
+    const fileUrl = document.fileUrl?.trim();
+    if (fileUrl) {
+      await this.storageService.deleteObject(fileUrl);
+    }
+    await this.ingestionService.deleteDocument(documentId, userId);
+    return DocumentResponseDto.fromEntity(document);
   }
 
   private async parseUploadedFile(file: UploadedDocumentFile) {

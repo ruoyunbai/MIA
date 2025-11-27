@@ -4,9 +4,10 @@ import {
   BadRequestException,
   NotFoundException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DeepPartial } from 'typeorm';
+import { Repository, In, DeepPartial, SelectQueryBuilder } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import type { EmbeddingsInterface } from '@langchain/core/embeddings';
 import {
@@ -33,6 +34,8 @@ import type {
   DocumentIngestionEventPayload,
   DocumentIngestionEventType,
 } from './document-ingestion-events.service';
+import { UpdateDocumentDto } from '../dto/update-document.dto';
+import { QueryDocumentsDto } from '../dto/query-documents.dto';
 
 const DEFAULT_CHUNK_SIZE = 800;
 const DEFAULT_CHUNK_OVERLAP = 160;
@@ -98,6 +101,13 @@ export type PreviewSearchMatch = {
 export type PreviewSearchResult = {
   query: string;
   matches: PreviewSearchMatch[];
+};
+
+export type PaginatedDocumentsResult = {
+  items: Document[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 class LangchainEmbeddingFunction implements EmbeddingFunction {
@@ -224,6 +234,79 @@ export class DocumentIngestionService {
     };
   }
 
+  async listDocuments(
+    query: QueryDocumentsDto,
+    userId: number,
+  ): Promise<PaginatedDocumentsResult> {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const qb = this.documentsRepository.createQueryBuilder('document');
+    qb.andWhere('document.userId = :ownerId', { ownerId: userId });
+    this.applyDocumentFilters(qb, query);
+    qb.orderBy('document.updatedAt', 'DESC');
+    const [items, total] = await qb
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+    return { items, total, page, pageSize };
+  }
+
+  getDocument(documentId: number, ownerId?: number) {
+    return this.requireDocument(documentId, ownerId);
+  }
+
+  async updateDocument(
+    documentId: number,
+    ownerId: number,
+    payload: UpdateDocumentDto,
+  ) {
+    const document = await this.requireDocument(documentId, ownerId);
+    if (payload.title !== undefined) {
+      const normalized = payload.title?.trim();
+      if (!normalized) {
+        throw new BadRequestException('文档标题不能为空');
+      }
+      document.title = normalized;
+    }
+    if (payload.content !== undefined) {
+      document.content = payload.content?.trim() || null;
+    }
+    if (
+      payload.userId !== undefined &&
+      payload.userId !== null &&
+      payload.userId !== ownerId
+    ) {
+      throw new ForbiddenException('不可修改文档归属');
+    }
+    if (payload.categoryId !== undefined) {
+      if (payload.categoryId === null) {
+        document.categoryId = null;
+      } else {
+        const categoryId = await this.resolveCategoryId(payload.categoryId);
+        document.categoryId = categoryId ?? null;
+      }
+    }
+    document.userId = ownerId;
+    if (payload.status !== undefined) {
+      document.status = payload.status;
+    }
+    if (payload.ingestionStatus !== undefined) {
+      document.ingestionStatus = payload.ingestionStatus;
+    }
+    if (payload.fileUrl !== undefined) {
+      document.fileUrl = payload.fileUrl?.trim() || null;
+    }
+    if (payload.metaInfo !== undefined) {
+      document.metaInfo = this.normalizeMetaInfo(payload.metaInfo);
+    }
+    return this.documentsRepository.save(document);
+  }
+
+  async deleteDocument(documentId: number, ownerId: number) {
+    await this.requireDocument(documentId, ownerId);
+    await this.documentsRepository.delete(documentId);
+  }
+
   async getDocumentIngestionStatus(documentId: number) {
     const document = await this.requireDocument(documentId);
     return {
@@ -277,7 +360,7 @@ export class DocumentIngestionService {
       throw new BadRequestException('文档内容为空，无法进行切片');
     }
 
-    await this.removeExistingChunks(documentId);
+    await this.purgeDocumentChunks(documentId);
 
     const chunkerKey = this.resolveChunkerKey(options?.chunkStrategy);
     const chunker = this.chunkerRegistry.getChunker(chunkerKey);
@@ -504,7 +587,7 @@ export class DocumentIngestionService {
     });
   }
 
-  private async removeExistingChunks(documentId: number) {
+  async purgeDocumentChunks(documentId: number) {
     const existingChunks = await this.chunksRepository.find({
       where: { documentId },
       select: ['id'],
@@ -551,9 +634,13 @@ export class DocumentIngestionService {
     }
   }
 
-  private async requireDocument(documentId: number) {
+  private async requireDocument(documentId: number, ownerId?: number) {
+    const where: Record<string, unknown> = { id: documentId };
+    if (ownerId !== undefined) {
+      where['userId'] = ownerId;
+    }
     const document = await this.documentsRepository.findOne({
-      where: { id: documentId },
+      where,
     });
     if (!document) {
       throw new NotFoundException(`文档 ${documentId} 不存在`);
@@ -812,7 +899,62 @@ export class DocumentIngestionService {
     return Math.min(10, Math.max(1, Math.floor(limit)));
   }
 
-  private async resolveCategoryId(categoryId?: number) {
+  private applyDocumentFilters(
+    qb: SelectQueryBuilder<Document>,
+    query: QueryDocumentsDto,
+  ) {
+    const keyword = query.keyword?.trim();
+    if (keyword) {
+      const escaped = this.escapeLikeWildcard(keyword);
+      qb.andWhere(
+        '(document.title LIKE :keyword OR document.content LIKE :keyword)',
+        { keyword: `%${escaped}%` },
+      );
+    }
+    if (query.categoryId !== undefined) {
+      qb.andWhere('document.categoryId = :categoryId', {
+        categoryId: query.categoryId,
+      });
+    }
+    if (query.status) {
+      qb.andWhere('document.status = :status', { status: query.status });
+    }
+    if (query.ingestionStatus) {
+      qb.andWhere('document.ingestionStatus = :ingestionStatus', {
+        ingestionStatus: query.ingestionStatus,
+      });
+    }
+  }
+
+  private normalizePage(page?: number) {
+    if (page === undefined || Number.isNaN(Number(page))) {
+      return 1;
+    }
+    return Math.max(1, Math.floor(page));
+  }
+
+  private normalizePageSize(pageSize?: number) {
+    if (pageSize === undefined || Number.isNaN(Number(pageSize))) {
+      return 20;
+    }
+    return Math.min(100, Math.max(1, Math.floor(pageSize)));
+  }
+
+  private escapeLikeWildcard(input: string) {
+    return input.replace(/([%_\\])/g, '\\$1');
+  }
+
+  private normalizeMetaInfo(metaInfo?: Record<string, unknown>) {
+    if (!metaInfo) {
+      return null;
+    }
+    if (!Object.keys(metaInfo).length) {
+      return null;
+    }
+    return metaInfo;
+  }
+
+  private async resolveCategoryId(categoryId?: number | null) {
     if (categoryId === undefined || categoryId === null) {
       return undefined;
     }
@@ -825,7 +967,7 @@ export class DocumentIngestionService {
     return categoryId;
   }
 
-  private async resolveUserId(userId?: number) {
+  private async resolveUserId(userId?: number | null) {
     if (userId === undefined || userId === null) {
       return undefined;
     }

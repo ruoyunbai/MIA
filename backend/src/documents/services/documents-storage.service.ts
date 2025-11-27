@@ -74,6 +74,36 @@ export class DocumentsStorageService {
     return { key, url };
   }
 
+  async deleteObject(keyOrUrl: string) {
+    if (!keyOrUrl) {
+      return;
+    }
+    this.ensureCosClient();
+    const key = this.extractObjectKey(keyOrUrl);
+    if (!key) {
+      this.logger.warn(`无法解析 COS 对象 Key: ${keyOrUrl}`);
+      return;
+    }
+    await new Promise<void>((resolve, reject) => {
+      this.cosClient?.deleteObject(
+        {
+          Bucket: this.bucket!,
+          Region: this.region!,
+          Key: key,
+        },
+        (err) => {
+          if (err) {
+            this.logger.error('COS deleteObject 失败', err);
+            return reject(
+              new InternalServerErrorException('删除 COS 对象失败，请稍后重试'),
+            );
+          }
+          return resolve();
+        },
+      );
+    });
+  }
+
   private ensureCosClient() {
     if (!this.cosClient || !this.bucket || !this.region) {
       throw new InternalServerErrorException('COS 配置缺失，无法执行该操作');
@@ -172,5 +202,20 @@ export class DocumentsStorageService {
         },
       );
     });
+  }
+
+  private extractObjectKey(input: string) {
+    if (!input) {
+      return null;
+    }
+    if (!input.includes('://')) {
+      return input.replace(/^\/+/, '');
+    }
+    try {
+      const parsed = new URL(input);
+      return parsed.pathname.replace(/^\/+/, '');
+    } catch {
+      return null;
+    }
   }
 }

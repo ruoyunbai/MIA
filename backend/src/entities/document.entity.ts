@@ -36,10 +36,10 @@ export class Document {
   title: string;
 
   @Column({ type: 'longtext', nullable: true, comment: '文档原始内容' })
-  content: string;
+  content: string | null;
 
   @Column({ nullable: true, comment: '分类ID' })
-  categoryId: number;
+  categoryId: number | null;
 
   @ManyToOne(() => Category, (category) => category.documents, {
     onDelete: 'SET NULL',
@@ -48,7 +48,7 @@ export class Document {
   category: Category;
 
   @Column({ nullable: true, comment: '创建者ID' })
-  userId: number;
+  userId: number | null;
 
   @ManyToOne(() => User, (user) => user.documents, {
     onDelete: 'CASCADE',
@@ -67,8 +67,13 @@ export class Document {
   @Column({ type: 'json', nullable: true, comment: '元数据(作者/来源/标签等)' })
   metaInfo: Record<string, unknown> | null;
 
-  @Column({ length: 500, nullable: true, comment: '原始文件URL(如果是PDF等)' })
-  fileUrl: string;
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    comment: '原始文件URL(如果是PDF等)',
+  })
+  fileUrl: string | null;
 
   @Column({ length: 64, nullable: true, comment: '内容哈希，用于去重' })
   contentHash: string;

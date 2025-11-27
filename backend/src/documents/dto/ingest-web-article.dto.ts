@@ -1,10 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  Matches,
-  MaxLength,
-  IsString,
-  IsOptional,
-} from 'class-validator';
+import { Matches, MaxLength, IsString, IsOptional } from 'class-validator';
 import { IngestUploadedDocumentDto } from './ingest-uploaded-document.dto';
 
 const SUPPORTED_ARTICLE_URL =
@@ -18,7 +13,7 @@ export class IngestWebArticleDto extends IngestUploadedDocumentDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  override title?: string;
+  override title?: string = undefined;
 
   @ApiProperty({
     description: '小店课堂文章链接，只支持 doudian/web/article 路径',

@@ -1,16 +1,27 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   MessageEvent,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Query,
   Sse,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { Observable } from 'rxjs';
 import { DocumentsService } from './documents.service';
@@ -22,6 +33,10 @@ import { IngestUploadedDocumentDto } from './dto/ingest-uploaded-document.dto';
 import { IngestWebArticleDto } from './dto/ingest-web-article.dto';
 import { GetDocumentIngestionStatusDto } from './dto/get-document-ingestion-status.dto';
 import { SearchDocumentsDto } from './dto/search-documents.dto';
+import { UpdateDocumentDto } from './dto/update-document.dto';
+import { QueryDocumentsDto } from './dto/query-documents.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { StorageEngine } from 'multer';
 
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
@@ -31,6 +46,51 @@ const MEMORY_STORAGE: StorageEngine = memoryStorage();
 @Controller('documents')
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
+
+  @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '查询文档列表' })
+  listDocuments(
+    @CurrentUser('id') userId: number,
+    @Query() query: QueryDocumentsDto,
+  ) {
+    return this.documentsService.listDocuments(userId, query);
+  }
+
+  @Get(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '文档详情' })
+  getDocument(
+    @CurrentUser('id') userId: number,
+    @Param('id', ParseIntPipe) documentId: number,
+  ) {
+    return this.documentsService.getDocument(documentId, userId);
+  }
+
+  @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '更新文档记录' })
+  updateDocument(
+    @CurrentUser('id') userId: number,
+    @Param('id', ParseIntPipe) documentId: number,
+    @Body() payload: UpdateDocumentDto,
+  ) {
+    return this.documentsService.updateDocument(documentId, userId, payload);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '删除文档并清理索引/切片' })
+  deleteDocument(
+    @CurrentUser('id') userId: number,
+    @Param('id', ParseIntPipe) documentId: number,
+  ) {
+    return this.documentsService.deleteDocument(documentId, userId);
+  }
 
   @Post('upload')
   @ApiOperation({ summary: '上传 PDF/Word 文档到 COS' })
