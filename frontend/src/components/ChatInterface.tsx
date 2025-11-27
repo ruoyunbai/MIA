@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, Plus } from 'lucide-react';
-import { Resizable } from 're-resizable';
+import { ResizeBox } from '@arco-design/web-react';
 import { useChat } from '../hooks/useChat';
 import { ChatSidebar } from './chat/ChatSidebar';
 import { ChatMessageList } from './chat/ChatMessageList';
@@ -31,6 +31,41 @@ export function ChatInterface() {
   } = useChat();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [splitSize, setSplitSize] = useState<number>(0.6);
+  const showSourcePanel = Boolean(selectedSource);
+
+  const handleSplitMoving = (_event: MouseEvent, size: number | string) => {
+    if (typeof size === 'number') {
+      setSplitSize(size);
+      return;
+    }
+    const percent = typeof size === 'string' && size.endsWith('%')
+      ? Number.parseFloat(size) / 100
+      : undefined;
+    if (percent) {
+      setSplitSize(percent);
+    }
+  };
+
+  const chatPane = (
+    <div className={styles.chatPanel}>
+      <div className={styles.panelBody}>
+        <ChatMessageList
+          messages={activeConversation?.messages || []}
+          isTyping={isTyping}
+          onSourceClick={handleSourceClick}
+          onSuggestionClick={(text) => handleSend(text)}
+        />
+
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          isTyping={isTyping}
+          onSend={() => handleSend()}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div className={styles.interface}>
@@ -77,58 +112,40 @@ export function ChatInterface() {
 
       {/* Main Content Area with Resizable Panels */}
       <div className={styles.workspace}>
-        <Resizable
-          defaultSize={{
-            width: selectedSource ? '60%' : '100%',
-            height: '100%',
-          }}
-          minWidth={selectedSource ? '40%' : '100%'}
-          maxWidth={selectedSource ? '80%' : '100%'}
-          enable={{
-            right: selectedSource ? true : false,
-          }}
-          handleStyles={{
-            right: {
-              width: '4px',
-              right: '-2px',
-              cursor: 'col-resize',
-              backgroundColor: 'transparent',
-            },
-          }}
-          handleClasses={{
-            right: 'hover:bg-blue-500 transition-colors',
-          }}
-          className={styles.chatPanel}
-        >
-          {/* Chat Area */}
-          <div className={styles.panelBody}>
-            <ChatMessageList
-              messages={activeConversation?.messages || []}
-              isTyping={isTyping}
-              onSourceClick={handleSourceClick}
-              onSuggestionClick={(text) => handleSend(text)}
-            />
-
-            <ChatInput
-              input={input}
-              setInput={setInput}
-              isTyping={isTyping}
-              onSend={() => handleSend()}
-            />
-          </div>
-        </Resizable>
-
-        {/* Source Viewer Panel */}
-        {selectedSource && (
-          <SourcePreview
-            selectedSource={selectedSource}
-            sourceHistory={sourceHistory}
-            historyIndex={historyIndex}
-            onClose={handleCloseSource}
-            onBackward={handleBackward}
-            onForward={handleForward}
-            onHistoryItemClick={handleHistoryItemClick}
+        {showSourcePanel && selectedSource ? (
+          <ResizeBox.Split
+            className={styles.splitContainer}
+            direction="horizontal"
+            size={splitSize}
+            min={0.4}
+            max={0.8}
+            icon={
+              <div className={styles.splitHandle} aria-hidden="true">
+                <span className={styles.splitHandleTrack} />
+              </div>
+            }
+            onMoving={handleSplitMoving}
+            panes={[
+              <div className={styles.chatPane} key="chat-pane">
+                {chatPane}
+              </div>,
+              <div className={styles.sourcePane} key="source-pane">
+                <SourcePreview
+                  selectedSource={selectedSource}
+                  sourceHistory={sourceHistory}
+                  historyIndex={historyIndex}
+                  onClose={handleCloseSource}
+                  onBackward={handleBackward}
+                  onForward={handleForward}
+                  onHistoryItemClick={handleHistoryItemClick}
+                />
+              </div>,
+            ]}
           />
+        ) : (
+          <div className={styles.splitPane}>
+            {chatPane}
+          </div>
         )}
       </div>
     </div>
