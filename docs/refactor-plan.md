@@ -19,8 +19,8 @@
 2. 引入统一的 API 契约工具（如基于 Swagger 的代码生成或 `ts-rest`），派生 axios 实例 & DTO，避免手写 `ApiResponse`。
 3. 以领域模块组织目录，例如 `src/features/chat` 下包含 `components/hooks/api/store`，`ChatInterface` 只做视图，交互抽到 hooks。
 
-### 2. 聊天链路打通 （这一条不用管，我还在开发中）
-1. 在前端定义 `chatService.sendMessage`，通过真实接口调用后端 `llm`/`documents` 能力；`useChat` 负责请求状态和消息队列。
+### 2. 聊天链路打通 
+1. 在前端定义 `chatService.sendMessage`，通过真实接口调用后端 `llm`/`documents` 能力；`useChat` 负责请求状态和消息队列。（这一条不用管，我还在开发中）
 2. 后端增加 `ChatController`，封装检索、LLM 调用、引用来源返回格式，明确响应 schema，配合前端 SDK 使用。
 
 ### 3. 后端模块治理

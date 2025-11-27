@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useOutletContext } from 'react-router';
 import { AuthModal } from '../components/AuthModal';
 import { AppShell, type TabId } from '../components/layout/AppShell';
-import { useStore, type User } from '../store/useStore';
+import { useAppStore } from '../store/useAppStore';
 import { useEditorModal, type OpenEditorPayload } from '../hooks/useEditorModal';
 import { fetchCurrentUser } from '../api/user';
 import { AUTH_LOGOUT_EVENT, clearAuthToken, getAuthToken } from '../utils/authToken';
+import type { User } from '../store/types';
 
 const tabToPath: Record<TabId, string> = {
   chat: '/',
@@ -25,7 +26,7 @@ export interface RootOutletContext {
 
 export function RootLayout() {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, setUser } = useStore();
+  const { user, setUser } = useAppStore();
   const { EditorModal, openEditor } = useEditorModal();
   const location = useLocation();
   const navigate = useNavigate();

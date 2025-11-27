@@ -1,6 +1,6 @@
 import { Search, Filter, Tag } from "lucide-react";
 import styles from "./FilterBar.module.css";
-import type { Category, SubCategory } from "../../store/useStore";
+import type { Category, SubCategory } from "../../store/types";
 
 interface KnowledgeFilterBarProps {
   searchQuery: string;

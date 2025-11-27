@@ -12,7 +12,7 @@ import { setAuthToken } from "../utils/authToken";
 import message from "../utils/message";
 import { isErrorHandled } from "../utils/error";
 import styles from "./AuthModal.module.css";
-import type { User } from "../store/useStore";
+import type { User } from "../store/types";
 
 const VERIFICATION_COOLDOWN = 60;
 

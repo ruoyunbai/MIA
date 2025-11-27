@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { ChatMessage, type ChatMessageSource } from './ChatMessage';
 import styles from './ChatMessageList.module.css';
-import type { Message } from '../../store/useStore';
+import type { Message } from '../../../store/types';
 
 interface ChatMessageListProps {
     messages: Message[];

@@ -1,15 +1,15 @@
 import { FolderTree, Plus, Edit, Trash2, Tag } from "lucide-react";
 import styles from "./CategoryManagement.module.css";
-import type { Category, SubCategory } from "../../store/useStore";
+import type { Category, SubCategory } from "../../store/types";
 
 interface CategoryManagementProps {
   categories: Category[];
   onAddCategory: () => void;
   onEditCategory: (category: Category) => void;
-  onDeleteCategory: (id: string) => void;
+  onDeleteCategory: (id: number) => void;
   onAddSubCategory: (category: Category) => void;
   onEditSubCategory: (category: Category, subCategory: SubCategory) => void;
-  onDeleteSubCategory: (categoryId: string, subCategoryId: string) => void;
+  onDeleteSubCategory: (categoryId: number, subCategoryId: number) => void;
 }
 
 export function CategoryManagement({

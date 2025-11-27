@@ -86,9 +86,8 @@ describeCategory('CategoriesService (integration)', () => {
   });
 
   it('creates a root category and persists to database', async () => {
-    const root = await service.create({
+    const root = await service.create(testUser.id, {
       name: `Integration Root ${Date.now()}`,
-      userId: testUser.id,
     });
 
     createdIds.push(root.id);
@@ -101,15 +100,13 @@ describeCategory('CategoriesService (integration)', () => {
   });
 
   it('creates second-level category under a parent', async () => {
-    const parent = await service.create({
+    const parent = await service.create(testUser.id, {
       name: `Integration Parent ${Date.now()}`,
-      userId: testUser.id,
     });
     createdIds.push(parent.id);
 
-    const child = await service.create({
+    const child = await service.create(testUser.id, {
       name: `Integration Child ${Date.now()}`,
-      userId: testUser.id,
       parentId: parent.id,
     });
     createdIds.push(child.id);
@@ -119,23 +116,20 @@ describeCategory('CategoriesService (integration)', () => {
   });
 
   it('rejects third-level category creation', async () => {
-    const parent = await service.create({
+    const parent = await service.create(testUser.id, {
       name: `Integration Parent 2 ${Date.now()}`,
-      userId: testUser.id,
     });
     createdIds.push(parent.id);
 
-    const child = await service.create({
+    const child = await service.create(testUser.id, {
       name: `Integration Child 2 ${Date.now()}`,
-      userId: testUser.id,
       parentId: parent.id,
     });
     createdIds.push(child.id);
 
     await expect(
-      service.create({
+      service.create(testUser.id, {
         name: `Integration Third ${Date.now()}`,
-        userId: testUser.id,
         parentId: child.id,
       }),
     ).rejects.toThrow();

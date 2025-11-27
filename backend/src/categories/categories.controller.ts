@@ -8,14 +8,29 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  ApiResponse as ApiResponseWrapper,
+  buildSuccessResponse,
+} from '../common/dto/api-response.dto';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { QueryCategoryDto } from './dto/query-category.dto';
+import { CategoryResponseDto } from './dto/category-response.dto';
 
 @ApiTags('Categories')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
@@ -23,34 +38,70 @@ export class CategoriesController {
   @Post()
   @ApiOperation({ summary: '创建分类' })
   @ApiResponse({ status: 201, description: '创建成功' })
-  create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoriesService.create(createCategoryDto);
+  async create(
+    @CurrentUser('id') userId: number,
+    @Body() createCategoryDto: CreateCategoryDto,
+  ): Promise<ApiResponseWrapper<CategoryResponseDto>> {
+    const category = await this.categoriesService.create(
+      userId,
+      createCategoryDto,
+    );
+    return buildSuccessResponse(
+      CategoryResponseDto.fromEntity(category),
+      '创建成功',
+    );
   }
 
   @Get()
   @ApiOperation({ summary: '分类列表' })
-  findAll(@Query() query: QueryCategoryDto) {
-    return this.categoriesService.findAll(query);
+  async findAll(
+    @CurrentUser('id') userId: number,
+    @Query() query: QueryCategoryDto,
+  ): Promise<ApiResponseWrapper<CategoryResponseDto[]>> {
+    const categories = await this.categoriesService.findAll(userId, query);
+    return buildSuccessResponse(
+      CategoryResponseDto.fromEntities(categories),
+    );
   }
 
   @Get(':id')
   @ApiOperation({ summary: '分类详情' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.categoriesService.findOne(id);
+  async findOne(
+    @CurrentUser('id') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ApiResponseWrapper<CategoryResponseDto>> {
+    const category = await this.categoriesService.findOne(userId, id);
+    return buildSuccessResponse(CategoryResponseDto.fromEntity(category));
   }
 
   @Patch(':id')
   @ApiOperation({ summary: '更新分类' })
-  update(
+  async update(
+    @CurrentUser('id') userId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCategoryDto: UpdateCategoryDto,
-  ) {
-    return this.categoriesService.update(id, updateCategoryDto);
+  ): Promise<ApiResponseWrapper<CategoryResponseDto>> {
+    const category = await this.categoriesService.update(
+      userId,
+      id,
+      updateCategoryDto,
+    );
+    return buildSuccessResponse(
+      CategoryResponseDto.fromEntity(category),
+      '更新成功',
+    );
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '删除分类' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.categoriesService.remove(id);
+  async remove(
+    @CurrentUser('id') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ApiResponseWrapper<CategoryResponseDto>> {
+    const category = await this.categoriesService.remove(userId, id);
+    return buildSuccessResponse(
+      CategoryResponseDto.fromEntity(category),
+      '删除成功',
+    );
   }
 }

@@ -22,13 +22,6 @@ export class CreateCategoryDto {
   @Min(1)
   parentId?: number;
 
-  @ApiProperty({ description: '创建者ID', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  userId?: number;
-
   @ApiProperty({
     description: '排序权重',
     required: false,

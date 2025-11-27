@@ -1,13 +1,13 @@
 import { type MouseEvent } from 'react';
 import { MessageSquare, Plus, Trash2, X } from 'lucide-react';
 import styles from './ChatSidebar.module.css';
-import type { Conversation } from '../../store/useStore';
+import type { Conversation } from '../../../store/types';
 
 interface ChatSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     conversations: Conversation[];
-    activeConversationId: string;
+    activeConversationId: string | null;
     onSelectConversation: (id: string) => void;
     onNewChat: () => void;
     onDeleteConversation: (id: string) => void;

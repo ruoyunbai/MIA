@@ -1,8 +1,4 @@
-export interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
+import type { ApiResponse } from '../../../../shared/api-contracts';
 
 export const buildSuccessResponse = <T>(
   data: T,
@@ -12,3 +8,5 @@ export const buildSuccessResponse = <T>(
   message,
   data,
 });
+
+export type { ApiResponse };

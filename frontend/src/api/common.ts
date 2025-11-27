@@ -19,10 +19,10 @@ export interface ExamplePayload {
 
 // 示例：GET 请求
 export function getExample(params: ExampleParams) {
-    return request.get<ExampleResponse>('/example/path', { params });
+    return request.get<ExampleResponse, ExampleResponse>('/example/path', { params });
 }
 
 // 示例：POST 请求
 export function postExample(data: ExamplePayload) {
-    return request.post('/example/path', data);
+    return request.post<ExamplePayload, ExampleResponse>('/example/path', data);
 }

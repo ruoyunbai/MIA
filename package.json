@@ -6,7 +6,8 @@
     "prepare": "husky install",
     "check-commit": "node scripts/check-commit-type.js",
     "lint": "eslint --no-error-on-unmatched-pattern --ext .js,.jsx,.ts,.tsx frontend backend",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "npm run lint -- --fix",
+    "build": "npm run --prefix frontend build && npm run --prefix backend build"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

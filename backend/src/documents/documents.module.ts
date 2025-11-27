@@ -4,11 +4,15 @@ import { DocumentsService } from './documents.service';
 import { WebArticleParserService } from './parsers/web-article-parser.service';
 import { PdfDocumentParserService } from './parsers/pdf-document-parser.service';
 import { WordDocumentParserService } from './parsers/word-document-parser.service';
+import { DocumentsStorageService } from './services/documents-storage.service';
+import { DocumentsParsingService } from './services/documents-parsing.service';
 
 @Module({
   controllers: [DocumentsController],
   providers: [
     DocumentsService,
+    DocumentsStorageService,
+    DocumentsParsingService,
     WebArticleParserService,
     PdfDocumentParserService,
     WordDocumentParserService,

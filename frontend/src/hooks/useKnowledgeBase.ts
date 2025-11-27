@@ -1,10 +1,13 @@
-import { useMemo, useState, type ChangeEvent } from "react";
-import {
-  useStore,
-  type Category,
-  type Document,
-  type SubCategory,
-} from "../store/useStore";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useAppStore } from "../store/useAppStore";
+import { fetchCategories, createCategory as createCategoryApi, updateCategory as updateCategoryApi, deleteCategory as deleteCategoryApi } from "../api/categories";
+import notify from "../utils/message";
+import type {
+  Category,
+  Document,
+  SubCategory,
+} from "../store/types";
+import type { CategoryDto } from "../../../shared/api-contracts";
 
 interface EditorState {
   isOpen: boolean;
@@ -41,13 +44,11 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     documents,
     categories,
     setDocuments,
+    setCategories,
     addDocument,
     updateDocument,
     deleteDocument: removeDocument,
-    addCategory,
-    updateCategory,
-    deleteCategory: removeCategory,
-  } = useStore();
+  } = useAppStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -69,6 +70,18 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
   const [newDoc, setNewDoc] = useState<DraftDocument>({ ...emptyDoc });
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newSubCategoryName, setNewSubCategoryName] = useState("");
+  const refreshCategories = useCallback(async () => {
+    try {
+      const list = await fetchCategories();
+      setCategories(buildCategoryTree(list));
+    } catch {
+      // 全局请求拦截器已经处理错误提示
+    }
+  }, [setCategories]);
+
+  useEffect(() => {
+    void refreshCategories();
+  }, [refreshCategories]);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
@@ -150,30 +163,41 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     setIsAddSubCategoryDialogOpen(true);
   };
 
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) return;
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name: newCategoryName,
-      subCategories: [],
-    };
-    addCategory(newCategory);
-    openCategoryDialog(false);
+  const handleAddCategory = async () => {
+    const trimmedName = newCategoryName.trim();
+    if (!trimmedName) return;
+    try {
+      await createCategoryApi({ name: trimmedName });
+      notify.success("业务分类创建成功");
+      openCategoryDialog(false);
+      await refreshCategories();
+    } catch {
+      // 错误由拦截器处理
+    }
   };
 
-  const handleUpdateCategory = () => {
-    if (!editingCategory || !newCategoryName.trim()) return;
-    updateCategory(editingCategory.id, { name: newCategoryName });
-    const updatedDocs = documents.map((doc) =>
-      doc.category === editingCategory.name
-        ? { ...doc, category: newCategoryName }
-        : doc,
-    );
-    setDocuments(updatedDocs);
-    openCategoryDialog(false);
+  const handleUpdateCategory = async () => {
+    if (!editingCategory) return;
+    const trimmedName = newCategoryName.trim();
+    if (!trimmedName) return;
+    const previousName = editingCategory.name;
+    try {
+      await updateCategoryApi(editingCategory.id, { name: trimmedName });
+      const updatedDocs = documents.map((doc) =>
+        doc.category === previousName
+          ? { ...doc, category: trimmedName }
+          : doc,
+      );
+      setDocuments(updatedDocs);
+      notify.success("业务分类更新成功");
+      openCategoryDialog(false);
+      await refreshCategories();
+    } catch {
+      // no-op
+    }
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: number) => {
     const category = categories.find((c) => c.id === categoryId);
     if (!category) return;
     const hasDocuments = documents.some((doc) => doc.category === category.name);
@@ -182,41 +206,55 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       return;
     }
     if (confirm(`确定要删除业务分类"${category.name}"吗？`)) {
-      removeCategory(categoryId);
+      try {
+        await deleteCategoryApi(categoryId);
+        notify.success("业务分类已删除");
+        await refreshCategories();
+      } catch {
+        // handled globally
+      }
     }
   };
 
-  const handleAddSubCategory = () => {
-    if (!selectedCategoryForSub || !newSubCategoryName.trim()) return;
-    const newSubCategory: SubCategory = {
-      id: `${selectedCategoryForSub.id}-${Date.now()}`,
-      name: newSubCategoryName,
-    };
-    const updatedCategory = {
-      ...selectedCategoryForSub,
-      subCategories: [...selectedCategoryForSub.subCategories, newSubCategory],
-    };
-    updateCategory(selectedCategoryForSub.id, updatedCategory);
-    openSubCategoryDialog(false);
+  const handleAddSubCategory = async () => {
+    if (!selectedCategoryForSub) return;
+    const trimmedName = newSubCategoryName.trim();
+    if (!trimmedName) return;
+    try {
+      await createCategoryApi({
+        name: trimmedName,
+        parentId: selectedCategoryForSub.id,
+      });
+      notify.success("场景分类创建成功");
+      openSubCategoryDialog(false);
+      await refreshCategories();
+    } catch {
+      // handled globally
+    }
   };
 
-  const handleUpdateSubCategory = () => {
-    if (!editingSubCategory || !newSubCategoryName.trim()) return;
+  const handleUpdateSubCategory = async () => {
+    if (!editingSubCategory) return;
+    const trimmedName = newSubCategoryName.trim();
+    if (!trimmedName) return;
     const { category, subCategory } = editingSubCategory;
-    const updatedSubCategories = category.subCategories.map((sub) =>
-      sub.id === subCategory.id ? { ...sub, name: newSubCategoryName } : sub,
-    );
-    updateCategory(category.id, { subCategories: updatedSubCategories });
-    const updatedDocs = documents.map((doc) =>
-      doc.category === category.name && doc.subCategory === subCategory.name
-        ? { ...doc, subCategory: newSubCategoryName }
-        : doc,
-    );
-    setDocuments(updatedDocs);
-    openSubCategoryDialog(false);
+    try {
+      await updateCategoryApi(subCategory.id, { name: trimmedName });
+      const updatedDocs = documents.map((doc) =>
+        doc.category === category.name && doc.subCategory === subCategory.name
+          ? { ...doc, subCategory: trimmedName }
+          : doc,
+      );
+      setDocuments(updatedDocs);
+      notify.success("场景分类更新成功");
+      openSubCategoryDialog(false);
+      await refreshCategories();
+    } catch {
+      // handled globally
+    }
   };
 
-  const handleDeleteSubCategory = (categoryId: string, subCategoryId: string) => {
+  const handleDeleteSubCategory = async (categoryId: number, subCategoryId: number) => {
     const category = categories.find((c) => c.id === categoryId);
     const subCategory = category?.subCategories.find((s) => s.id === subCategoryId);
     if (!category || !subCategory) return;
@@ -228,10 +266,13 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       return;
     }
     if (confirm(`确定要删除场景分类"${subCategory.name}"吗？`)) {
-      const updatedSubCategories = category.subCategories.filter(
-        (sub) => sub.id !== subCategoryId,
-      );
-      updateCategory(categoryId, { subCategories: updatedSubCategories });
+      try {
+        await deleteCategoryApi(subCategoryId);
+        notify.success("场景分类已删除");
+        await refreshCategories();
+      } catch {
+        // handled globally
+      }
     }
   };
 
@@ -355,4 +396,42 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     toggleStatus,
     deleteDocument,
   };
+}
+
+const sortCategories = (a: CategoryDto, b: CategoryDto) => {
+  if (a.sortOrder === b.sortOrder) {
+    return a.id - b.id;
+  }
+  return a.sortOrder - b.sortOrder;
+};
+
+function buildCategoryTree(categories: CategoryDto[]): Category[] {
+  const childrenMap = new Map<number, CategoryDto[]>();
+  const roots: CategoryDto[] = [];
+
+  categories.forEach((category) => {
+    if (category.parentId === null || category.parentId === undefined) {
+      roots.push(category);
+      return;
+    }
+    const list = childrenMap.get(category.parentId) ?? [];
+    list.push(category);
+    childrenMap.set(category.parentId, list);
+  });
+
+  roots.sort(sortCategories);
+
+  return roots.map((root) => ({
+    id: root.id,
+    name: root.name,
+    sortOrder: root.sortOrder,
+    subCategories: (childrenMap.get(root.id) ?? [])
+      .sort(sortCategories)
+      .map((child) => ({
+        id: child.id,
+        name: child.name,
+        parentId: child.parentId ?? root.id,
+        sortOrder: child.sortOrder,
+      })),
+  }));
 }

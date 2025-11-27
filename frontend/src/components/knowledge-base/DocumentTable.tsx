@@ -1,6 +1,6 @@
 import { FileText, Eye, Edit, Check, X, Trash2 } from "lucide-react";
 import styles from "./DocumentTable.module.css";
-import type { Document } from "../../store/useStore";
+import type { Document } from "../../store/types";
 
 interface KnowledgeDocumentTableProps {
   documents: Document[];

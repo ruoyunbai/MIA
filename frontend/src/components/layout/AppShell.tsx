@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { MessageSquare, Database, BarChart3, LogIn, LogOut, Menu, X } from 'lucide-react';
 import styles from '../../App.module.css';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import type { User } from '../../store/useStore';
+import type { User } from '../../store/types';
 
 const NAV_ITEMS = [
   { id: 'chat', label: '智能问答', icon: MessageSquare },

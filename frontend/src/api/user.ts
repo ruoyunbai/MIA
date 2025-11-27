@@ -1,5 +1,5 @@
 import request from '../utils/request';
-import type { User } from '../store/useStore';
+import type { User } from '../store/types';
 
 export interface LoginPayload {
   email: string;
@@ -17,15 +17,15 @@ export interface LoginResponse {
 }
 
 export function login(payload: LoginPayload) {
-  return request.post<LoginResponse>('/auth/login', payload);
+  return request.post<LoginResponse, LoginResponse>('/auth/login', payload);
 }
 
 export function register(payload: RegisterPayload) {
-  return request.post<User>('/users', payload);
+  return request.post<RegisterPayload, User>('/users', payload);
 }
 
 export function fetchCurrentUser() {
-  return request.get<User>('/users/me');
+  return request.get<User, User>('/users/me');
 }
 
 export interface RequestVerificationPayload {
@@ -34,5 +34,8 @@ export interface RequestVerificationPayload {
 }
 
 export function requestVerificationCode(payload: RequestVerificationPayload) {
-  return request.post<null>('/users/request-verification', payload);
+  return request.post<RequestVerificationPayload, null>(
+    '/users/request-verification',
+    payload,
+  );
 }

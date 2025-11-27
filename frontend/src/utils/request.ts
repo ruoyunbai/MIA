@@ -2,19 +2,13 @@ import axios, {
     type AxiosInstance,
     type AxiosError,
     type InternalAxiosRequestConfig,
-    type AxiosResponse
+    type AxiosResponse,
+    type AxiosRequestHeaders
 } from 'axios';
 import { getAuthToken, clearAuthToken, AUTH_LOGOUT_EVENT } from './authToken';
 import notify from './message';
 import { markErrorHandled, extractServerMessage } from './error';
-
-// 定义通用的后端响应结构
-// 注意：这里需要根据实际后端接口返回的格式进行修改
-interface ApiResponse<T = unknown> {
-    code: number;
-    message: string;
-    data: T;
-}
+import type { ApiResponse } from '../../../shared/api-contracts';
 
 // 创建 axios 实例
 const request: AxiosInstance = axios.create({
@@ -32,10 +26,9 @@ request.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = getAuthToken();
         if (token) {
-            config.headers = {
-                ...config.headers,
-                Authorization: `Bearer ${token}`,
-            };
+            const headers: AxiosRequestHeaders = config.headers ?? {};
+            headers.Authorization = `Bearer ${token}`;
+            config.headers = headers;
         }
 
         return config;

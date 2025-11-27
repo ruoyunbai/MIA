@@ -1,6 +1,6 @@
 import { ExternalLink, FileText } from 'lucide-react';
 import styles from './ChatMessage.module.css';
-import type { Message } from '../../store/useStore';
+import type { Message } from '../../../store/types';
 
 export type ChatMessageSource = NonNullable<Message['sources']>[number];
 

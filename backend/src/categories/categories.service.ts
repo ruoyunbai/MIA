@@ -18,17 +18,15 @@ export class CategoriesService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  async create(createCategoryDto: CreateCategoryDto) {
-    const parent = await this.getParentCategory(createCategoryDto.parentId);
-    const userId = createCategoryDto.userId ?? null;
-    this.ensureParentOwnership(parent, userId);
+  async create(userId: number, createCategoryDto: CreateCategoryDto) {
+    const parent = await this.getParentCategory(userId, createCategoryDto.parentId);
 
     const level = this.calculateLevel(parent);
     this.ensureLevel(level);
 
     const payload: DeepPartial<Category> = {
       name: createCategoryDto.name,
-      parentId: createCategoryDto.parentId ?? null,
+      parentId: parent?.id ?? null,
       userId,
       sortOrder: createCategoryDto.sortOrder ?? 0,
       level,
@@ -40,14 +38,11 @@ export class CategoriesService {
     const saved = await this.categoryRepository.save(category);
     const path = this.buildPath(saved.id, parent);
     await this.categoryRepository.update(saved.id, { path });
-    return this.findOne(saved.id);
+    return this.findOne(userId, saved.id);
   }
 
-  async findAll(query: QueryCategoryDto) {
-    const where: FindOptionsWhere<Category> = {};
-    if (query.userId !== undefined) {
-      where.userId = query.userId;
-    }
+  async findAll(userId: number, query: QueryCategoryDto) {
+    const where: FindOptionsWhere<Category> = { userId };
     if (query.parentId !== undefined) {
       where.parentId = query.parentId;
     }
@@ -58,16 +53,16 @@ export class CategoriesService {
     });
   }
 
-  async findOne(id: number) {
-    const category = await this.categoryRepository.findOne({ where: { id } });
-    if (!category) {
-      throw new NotFoundException(`分类 ${id} 不存在`);
-    }
-    return category;
+  async findOne(userId: number, id: number) {
+    return this.getOwnedCategory(id, userId);
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    const category = await this.findOne(id);
+  async update(
+    userId: number,
+    id: number,
+    updateCategoryDto: UpdateCategoryDto,
+  ) {
+    const category = await this.getOwnedCategory(id, userId);
     const nextParentId =
       updateCategoryDto.parentId ?? category.parentId ?? null;
 
@@ -75,12 +70,7 @@ export class CategoriesService {
       throw new BadRequestException('不能将自己设为父分类');
     }
 
-    const parent = await this.getParentCategory(nextParentId ?? undefined);
-    const nextUserId =
-      updateCategoryDto.userId !== undefined
-        ? (updateCategoryDto.userId ?? null)
-        : category.userId;
-    this.ensureParentOwnership(parent, nextUserId);
+    const parent = await this.getParentCategory(userId, nextParentId ?? undefined);
     this.ensureParentNotDescendant(parent, id);
 
     const level = this.calculateLevel(parent);
@@ -89,7 +79,7 @@ export class CategoriesService {
     const payload: QueryDeepPartialEntity<Category> = {
       name: updateCategoryDto.name ?? category.name,
       parentId: nextParentId,
-      userId: nextUserId,
+      userId,
       sortOrder:
         updateCategoryDto.sortOrder !== undefined
           ? updateCategoryDto.sortOrder
@@ -99,40 +89,28 @@ export class CategoriesService {
     };
 
     await this.categoryRepository.update(id, payload);
-    const updated = await this.findOne(id);
-    await this.refreshDescendantPath(updated);
+    const updated = await this.findOne(userId, id);
+    await this.refreshDescendantPath(updated, userId);
     return updated;
   }
 
-  async remove(id: number) {
-    const category = await this.findOne(id);
+  async remove(userId: number, id: number) {
+    const category = await this.getOwnedCategory(id, userId);
     await this.categoryRepository.delete(id);
     return category;
   }
 
-  private async getParentCategory(parentId?: number) {
+  private async getParentCategory(userId: number, parentId?: number) {
     if (!parentId) {
       return null;
     }
     const parent = await this.categoryRepository.findOne({
-      where: { id: parentId },
+      where: { id: parentId, userId },
     });
     if (!parent) {
       throw new BadRequestException(`父分类 ${parentId} 不存在`);
     }
     return parent;
-  }
-
-  private ensureParentOwnership(
-    parent: Category | null,
-    userId: number | null,
-  ) {
-    if (!parent || userId === null || parent.userId === null) {
-      return;
-    }
-    if (parent.userId !== userId) {
-      throw new BadRequestException('父分类不属于该用户');
-    }
   }
 
   private ensureParentNotDescendant(
@@ -166,9 +144,9 @@ export class CategoriesService {
     return `${base}/${id}`;
   }
 
-  private async refreshDescendantPath(category: Category) {
+  private async refreshDescendantPath(category: Category, userId: number) {
     const children = await this.categoryRepository.find({
-      where: { parentId: category.id },
+      where: { parentId: category.id, userId },
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
     for (const child of children) {
@@ -178,7 +156,17 @@ export class CategoriesService {
       await this.categoryRepository.update(child.id, { level, path });
       child.level = level;
       child.path = path;
-      await this.refreshDescendantPath(child);
+      await this.refreshDescendantPath(child, userId);
     }
+  }
+
+  private async getOwnedCategory(id: number, userId: number) {
+    const category = await this.categoryRepository.findOne({
+      where: { id, userId },
+    });
+    if (!category) {
+      throw new NotFoundException(`分类 ${id} 不存在`);
+    }
+    return category;
   }
 }
