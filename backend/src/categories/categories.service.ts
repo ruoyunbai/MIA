@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, DeepPartial } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Category } from '../entities';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -85,7 +86,7 @@ export class CategoriesService {
     const level = this.calculateLevel(parent);
     this.ensureLevel(level);
 
-    const payload: DeepPartial<Category> = {
+    const payload: QueryDeepPartialEntity<Category> = {
       name: updateCategoryDto.name ?? category.name,
       parentId: nextParentId,
       userId: nextUserId,
