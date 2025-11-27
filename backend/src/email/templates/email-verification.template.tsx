@@ -15,7 +15,7 @@ const containerStyle = {
   padding: '32px',
   border: '1px solid #f0f0f0',
   fontFamily:
-    '-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif',
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
 } satisfies React.CSSProperties;
 
 const textStyle = {

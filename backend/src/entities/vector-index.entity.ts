@@ -34,7 +34,7 @@ export class VectorIndex {
   dimension: number;
 
   @Column({ type: 'json', nullable: true, comment: '向量存储的额外元数据' })
-  vectorMetadata: Record<string, any>;
+  vectorMetadata: Record<string, unknown> | null;
 
   @CreateDateColumn()
   createdAt: Date;

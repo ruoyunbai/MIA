@@ -26,6 +26,11 @@ import type {
 } from '../interfaces/parsed-document.interface';
 import type { DocumentParser } from '../interfaces/document-parser.interface';
 
+type PdfOutlineNode = {
+  title?: string;
+  items?: PdfOutlineNode[];
+};
+
 const PDF_WORKER_SRC = join(
   __dirname,
   '../../../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
@@ -85,16 +90,18 @@ export class PdfDocumentParserService
       pdfjs.GlobalWorkerOptions.workerSrc ||= PDF_WORKER_SRC;
       const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) })
         .promise;
-      const outline = await pdf.getOutline();
+      const outline = (await pdf.getOutline()) as PdfOutlineNode[] | null;
       if (!outline?.length) {
         return null;
       }
       const anchors = new Map<string, number>();
       const items: DocumentOutlineItem[] = [];
-      const stack: { item: any; level: number }[] = outline.map((item) => ({
-        item,
-        level: 1,
-      }));
+      const stack: { item: PdfOutlineNode; level: number }[] = outline.map(
+        (item) => ({
+          item,
+          level: 1,
+        }),
+      );
       while (stack.length) {
         const { item, level } = stack.shift()!;
         if (!item?.title) {

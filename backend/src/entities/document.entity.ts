@@ -65,7 +65,7 @@ export class Document {
   status: DocumentStatus;
 
   @Column({ type: 'json', nullable: true, comment: '元数据(作者/来源/标签等)' })
-  metaInfo: Record<string, any>;
+  metaInfo: Record<string, unknown> | null;
 
   @Column({ length: 500, nullable: true, comment: '原始文件URL(如果是PDF等)' })
   fileUrl: string;

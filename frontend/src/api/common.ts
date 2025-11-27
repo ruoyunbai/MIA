@@ -11,12 +11,18 @@ export interface ExampleResponse {
     name: string;
 }
 
+// 示例：定义 POST 请求体类型
+export interface ExamplePayload {
+    name: string;
+    description?: string;
+}
+
 // 示例：GET 请求
 export function getExample(params: ExampleParams) {
     return request.get<ExampleResponse>('/example/path', { params });
 }
 
 // 示例：POST 请求
-export function postExample(data: any) {
+export function postExample(data: ExamplePayload) {
     return request.post('/example/path', data);
 }

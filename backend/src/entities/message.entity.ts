@@ -39,10 +39,10 @@ export class Message {
   content: string;
 
   @Column({ type: 'json', nullable: true, comment: '引用来源' })
-  sources: Record<string, any>[];
+  sources: Record<string, unknown>[] | null;
 
   @Column({ type: 'json', nullable: true, comment: '额外元数据(如token消耗)' })
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown> | null;
 
   @CreateDateColumn()
   createdAt: Date;

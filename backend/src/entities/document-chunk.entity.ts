@@ -34,7 +34,7 @@ export class DocumentChunk {
   tokenCount: number;
 
   @Column({ type: 'json', nullable: true, comment: '切片特定元数据' })
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown> | null;
 
   @OneToMany(() => VectorIndex, (vectorIndex) => vectorIndex.chunk)
   vectorIndices: VectorIndex[];

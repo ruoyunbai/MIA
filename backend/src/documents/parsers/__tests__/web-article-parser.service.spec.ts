@@ -1,13 +1,20 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { WebArticleParserService } from '../web-article-parser.service';
+import type { ParsedDocument } from '../../interfaces/parsed-document.interface';
 
 describe('WebArticleParserService', () => {
   let service: WebArticleParserService;
   let html: string;
   let docSdkHtml: string;
-  let fetchSpy: jest.SpyInstance;
   let complexTableHtml: string;
+  let fetchSpy: jest.SpyInstance<Promise<string>, [string]>;
+  type ParserInternals = {
+    fetchHtml: (url: string) => Promise<string>;
+    transformHtml: (htmlInput: string, urlInput: string) => ParsedDocument;
+    renderWithHeadlessBrowser: (url: string) => Promise<string>;
+  };
+  let internals: ParserInternals;
 
   beforeAll(() => {
     html = readFileSync(
@@ -26,9 +33,10 @@ describe('WebArticleParserService', () => {
 
   beforeEach(() => {
     service = new WebArticleParserService();
+    internals = service as unknown as ParserInternals;
     fetchSpy = jest
-      .spyOn<any>(service as any, 'fetchHtml')
-      .mockResolvedValue(Promise.resolve(html));
+      .spyOn(internals, 'fetchHtml')
+      .mockResolvedValue(html);
   });
 
   it('parses article into markdown/plainText/outline', async () => {
@@ -52,7 +60,7 @@ describe('WebArticleParserService', () => {
   it('falls back to Playwright when 静态 HTML 缺少正文', async () => {
     fetchSpy.mockResolvedValueOnce('<html><body></body></html>');
     const renderSpy = jest
-      .spyOn<any>(service as any, 'renderWithHeadlessBrowser')
+      .spyOn(internals, 'renderWithHeadlessBrowser')
       .mockResolvedValue(html);
     const result = await service.parse(
       'https://school.jinritemai.com/doudian/web/article/sample',
@@ -62,11 +70,9 @@ describe('WebArticleParserService', () => {
   });
 
   it('retries with Playwright when 解析结果内容为空', async () => {
-    const originalTransform = (service as any).transformHtml.bind(
-      service as any,
-    );
+    const originalTransform = internals.transformHtml.bind(service);
     jest
-      .spyOn<any>(service as any, 'transformHtml')
+      .spyOn(internals, 'transformHtml')
       .mockImplementationOnce(() => ({
         markdown: '# 未命名文章\n\n',
         plainText: '',
@@ -83,7 +89,7 @@ describe('WebArticleParserService', () => {
         originalTransform(htmlInput, urlInput),
       );
     const renderSpy = jest
-      .spyOn<any>(service as any, 'renderWithHeadlessBrowser')
+      .spyOn(internals, 'renderWithHeadlessBrowser')
       .mockResolvedValue(html);
     const result = await service.parse(
       'https://school.jinritemai.com/doudian/web/article/sample',
@@ -93,11 +99,9 @@ describe('WebArticleParserService', () => {
   });
 
   it('retries with Playwright when发现占位图链接', async () => {
-    const originalTransform = (service as any).transformHtml.bind(
-      service as any,
-    );
+    const originalTransform = internals.transformHtml.bind(service);
     jest
-      .spyOn<any>(service as any, 'transformHtml')
+      .spyOn(internals, 'transformHtml')
       .mockImplementationOnce(() => ({
         markdown:
           '![default.png](https://lf3-static.bytednsdoc.com/obj/eden-cn/upinulojnuvpe/eschool/20211124-place.jpeg)',
@@ -115,7 +119,7 @@ describe('WebArticleParserService', () => {
         originalTransform(htmlInput, urlInput),
       );
     const renderSpy = jest
-      .spyOn<any>(service as any, 'renderWithHeadlessBrowser')
+      .spyOn(internals, 'renderWithHeadlessBrowser')
       .mockResolvedValue(html);
     await service.parse(
       'https://school.jinritemai.com/doudian/web/article/sample',
