@@ -299,11 +299,13 @@
 
 .contentPanel {
   flex: 1;
+  min-height: 0;
   background: white;
   border-radius: 18px;
   box-shadow: 0 25px 45px rgba(15, 23, 42, 0.08);
   padding: 1.25rem;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @media (max-width: 1024px) {
