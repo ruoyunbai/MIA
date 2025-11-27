@@ -33,14 +33,18 @@ export interface Conversation {
 export interface Document {
   id: string;
   title: string;
+  categoryId?: number | null;
   category: string;
+  subCategoryId?: number | null;
   subCategory: string;
   status: DocumentStatus;
   uploadDate: Date;
   content: string;
+  userId?: number | null;
   fileType?: 'text' | 'pdf' | 'web';
   fileUrl?: string;
   sourceUrl?: string;
+  isLocal?: boolean;
   ingestion?: DocumentIngestionState;
 }
 

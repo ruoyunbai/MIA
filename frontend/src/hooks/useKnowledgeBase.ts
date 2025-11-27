@@ -2,8 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import { useAppStore } from "../store/useAppStore";
 import { fetchCategories, createCategory as createCategoryApi, updateCategory as updateCategoryApi, deleteCategory as deleteCategoryApi } from "../api/categories";
 import notify from "../utils/message";
-import { ingestWebArticle, type DocumentIngestionEvent } from "../api/documents";
-import type { Category, Document, SubCategory } from "../store/types";
+import { ingestWebArticle, fetchDocuments as fetchDocumentsApi, updateDocument as updateDocumentApi, deleteDocument as deleteDocumentApi, type DocumentIngestionEvent, type DocumentDto } from "../api/documents";
+import type {
+  Category,
+  Document,
+  DocumentIngestionEventType,
+  DocumentIngestionStatus,
+  SubCategory,
+} from "../store/types";
 import type { CategoryDto } from "../../../shared/api-contracts";
 
 interface EditorState {
@@ -72,10 +78,122 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
   const [newSubCategoryName, setNewSubCategoryName] = useState("");
   const pendingEventsRef = useRef<Map<string, DocumentIngestionEvent>>(new Map());
   const documentsRef = useRef<Document[]>(documents);
+  const categoriesRef = useRef<Category[]>(categories);
+  const rawDocumentsRef = useRef<DocumentDto[]>([]);
 
   useEffect(() => {
     documentsRef.current = documents;
   }, [documents]);
+
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
+
+  const resolveSelectedCategoryIds = useCallback(
+    (categoryName: string, subCategoryName: string) => {
+      const category = categories.find((cat) => cat.name === categoryName);
+      if (!category) {
+        return { categoryId: undefined, subCategoryId: undefined };
+      }
+      if (subCategoryName) {
+        const subCategory = category.subCategories.find(
+          (sub) => sub.name === subCategoryName,
+        );
+        if (subCategory) {
+          return { categoryId: category.id, subCategoryId: subCategory.id };
+        }
+      }
+      return { categoryId: category.id, subCategoryId: undefined };
+    },
+    [categories],
+  );
+
+  const resolveDocumentCategory = useCallback((categoryId?: number | null) => {
+    const fallback = {
+      categoryName: "未分类",
+      parentCategoryId: null as number | null,
+      subCategoryName: "",
+      subCategoryId: null as number | null,
+    };
+    if (categoryId === undefined || categoryId === null) {
+      return fallback;
+    }
+    for (const category of categoriesRef.current) {
+      if (category.id === categoryId) {
+        return {
+          categoryName: category.name,
+          parentCategoryId: category.id,
+          subCategoryName: "",
+          subCategoryId: null,
+        };
+      }
+      const subCategory = category.subCategories.find((sub) => sub.id === categoryId);
+      if (subCategory) {
+        return {
+          categoryName: category.name,
+          parentCategoryId: category.id,
+          subCategoryName: subCategory.name,
+          subCategoryId: subCategory.id,
+        };
+      }
+    }
+    return fallback;
+  }, []);
+
+  const mapDocumentDto = useCallback(
+    (dto: DocumentDto): Document => {
+      const categoryInfo = resolveDocumentCategory(dto.categoryId ?? undefined);
+      const metaInfo = (dto.metaInfo ?? {}) as Record<string, unknown>;
+      const getMetaString = (key: string) => {
+        const value = metaInfo[key];
+        return typeof value === "string" ? value : undefined;
+      };
+      const sourceUrl = getMetaString("sourceUrl");
+      const origin = getMetaString("origin");
+      const content =
+        dto.content ??
+        getMetaString("plainText") ??
+        getMetaString("markdown") ??
+        "";
+      return {
+        id: dto.id.toString(),
+        title: dto.title,
+        category: categoryInfo.categoryName,
+        categoryId: categoryInfo.parentCategoryId ?? undefined,
+        subCategory: categoryInfo.subCategoryName,
+        subCategoryId: categoryInfo.subCategoryId ?? undefined,
+        status: dto.status,
+        uploadDate: new Date(dto.createdAt),
+        content,
+        userId: dto.userId ?? undefined,
+        fileType:
+          origin === "web-article"
+            ? "web"
+            : dto.fileUrl
+              ? "pdf"
+              : "text",
+        fileUrl: dto.fileUrl ?? undefined,
+        sourceUrl,
+        isLocal: false,
+        ingestion: {
+          stage: mapIngestionStatusToStage(dto.ingestionStatus),
+          status: dto.ingestionStatus,
+          message: dto.ingestionError ?? undefined,
+          updatedAt: new Date(dto.updatedAt),
+        },
+      };
+    },
+    [resolveDocumentCategory],
+  );
+
+  useEffect(() => {
+    if (!rawDocumentsRef.current.length) {
+      return;
+    }
+    const mappedDocuments = rawDocumentsRef.current.map(mapDocumentDto);
+    const localDocuments = documentsRef.current.filter((doc) => doc.isLocal);
+    setDocuments([...localDocuments, ...mappedDocuments]);
+  }, [categories, mapDocumentDto, setDocuments]);
   const refreshCategories = useCallback(async () => {
     try {
       const list = await fetchCategories();
@@ -154,6 +272,22 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       eventSource.close();
     };
   }, [applyIngestionEvent]);
+
+  const refreshDocuments = useCallback(async () => {
+    try {
+      const result = await fetchDocumentsApi({ page: 1, pageSize: 100 });
+      rawDocumentsRef.current = result.items;
+      const mappedDocuments = result.items.map(mapDocumentDto);
+      const localDocuments = documentsRef.current.filter((doc) => doc.isLocal);
+      setDocuments([...localDocuments, ...mappedDocuments]);
+    } catch {
+      // errors handled globally
+    }
+  }, [mapDocumentDto, setDocuments]);
+
+  useEffect(() => {
+    void refreshDocuments();
+  }, [refreshDocuments]);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
@@ -358,6 +492,10 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     const normalizedTitle = newDoc.title.trim();
     const docCategory = newDoc.category;
     const docSubCategory = newDoc.subCategory;
+    const { categoryId, subCategoryId } = resolveSelectedCategoryIds(
+      docCategory,
+      docSubCategory,
+    );
     setIsSubmittingDocument(true);
     const now = new Date();
     const placeholderId = `temp-${Date.now()}`;
@@ -365,12 +503,15 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       id: placeholderId,
       title: normalizedTitle || "待解析文章",
       category: docCategory,
+      categoryId,
       subCategory: docSubCategory,
+      subCategoryId,
       status: "processing",
       uploadDate: now,
       content: `来源链接：${url}`,
       fileType: "web",
       sourceUrl: url,
+      isLocal: true,
       ingestion: {
         stage: "queued",
         status: "uploaded",
@@ -381,12 +522,12 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     addDocument(placeholder);
     openDocumentDialog(false);
     try {
-      const categoryId = categories.find((cat) => cat.name === docCategory)?.id;
+      const requestCategoryId = subCategoryId ?? categoryId;
       const response = await ingestWebArticle(
         {
           url,
           title: normalizedTitle || undefined,
-          categoryId,
+          categoryId: requestCategoryId,
         },
         {
           timeout: 60000,
@@ -396,12 +537,15 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
         id: response.documentId.toString(),
         title: normalizedTitle || response.title || placeholder.title,
         category: docCategory,
+        categoryId,
         subCategory: docSubCategory,
+        subCategoryId,
         status: response.status || "processing",
         uploadDate: now,
         content: placeholder.content,
         fileType: "web",
         sourceUrl: url,
+        isLocal: false,
         ingestion: {
           stage: "queued",
           status: "uploaded",
@@ -414,6 +558,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       addDocument(document);
       applyPendingEventForDocument(document.id);
       notify.success("链接已加入解析队列");
+      void refreshDocuments();
     } catch (error) {
       console.error("Failed to ingest web article", error);
       removeDocumentFromStore(placeholderId);
@@ -437,6 +582,11 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       return;
     }
 
+    const selectedCategoryIds = resolveSelectedCategoryIds(
+      newDoc.category,
+      newDoc.subCategory,
+    );
+
     if (inputMethod === "richtext") {
       openDocumentDialog(false);
       onOpenEditor({
@@ -451,11 +601,14 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
             id: Date.now().toString(),
             title: trimmedTitle,
             category: newDoc.category,
+            categoryId: selectedCategoryIds.categoryId,
             subCategory: newDoc.subCategory,
+            subCategoryId: selectedCategoryIds.subCategoryId,
             status: newDoc.status,
             uploadDate: new Date(),
             content,
             fileType: "text",
+            isLocal: true,
           };
           addDocument(document);
           setNewDoc({ ...emptyDoc });
@@ -471,15 +624,22 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
 
   const handleAddDocument = () => {
     const trimmedTitle = newDoc.title.trim();
+    const { categoryId, subCategoryId } = resolveSelectedCategoryIds(
+      newDoc.category,
+      newDoc.subCategory,
+    );
     const document: Document = {
       id: Date.now().toString(),
       title: trimmedTitle,
       category: newDoc.category,
+      categoryId,
       subCategory: newDoc.subCategory,
+      subCategoryId,
       status: newDoc.status,
       uploadDate: new Date(),
       content: newDoc.content,
       fileType: inputMethod === "pdf" ? "pdf" : "text",
+      isLocal: true,
     };
     addDocument(document);
     setNewDoc({ ...emptyDoc });
@@ -494,16 +654,47 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     }
   };
 
-  const toggleStatus = (id: string) => {
+  const toggleStatus = async (id: string) => {
     const doc = documents.find((d) => d.id === id);
-    if (doc && (doc.status === "active" || doc.status === "inactive")) {
-      updateDocument(id, { status: doc.status === "active" ? "inactive" : "active" });
+    if (!doc || (doc.status !== "active" && doc.status !== "inactive")) {
+      return;
+    }
+    const nextStatus: Document["status"] = doc.status === "active" ? "inactive" : "active";
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) {
+      updateDocument(id, { status: nextStatus });
+      notify.success(nextStatus === "active" ? "文档已启用" : "文档已停用");
+      return;
+    }
+    try {
+      const updated = await updateDocumentApi(numericId, { status: nextStatus });
+      rawDocumentsRef.current = rawDocumentsRef.current.map((dto) =>
+        dto.id === updated.id ? updated : dto,
+      );
+      updateDocument(id, mapDocumentDto(updated));
+      notify.success(nextStatus === "active" ? "文档已启用" : "文档已停用");
+    } catch {
+      // handled globally
     }
   };
 
-  const deleteDocument = (id: string) => {
-    if (confirm("确定要删除这个文档吗？")) {
+  const deleteDocument = async (id: string) => {
+    if (!confirm("确定要删除这个文档吗？")) {
+      return;
+    }
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) {
       removeDocumentFromStore(id);
+      notify.success("文档已删除");
+      return;
+    }
+    try {
+      await deleteDocumentApi(numericId);
+      rawDocumentsRef.current = rawDocumentsRef.current.filter((dto) => dto.id !== numericId);
+      removeDocumentFromStore(id);
+      notify.success("文档已删除");
+    } catch {
+      // handled globally
     }
   };
 
@@ -593,4 +784,22 @@ function buildCategoryTree(categories: CategoryDto[]): Category[] {
         sortOrder: child.sortOrder,
       })),
   }));
+}
+
+function mapIngestionStatusToStage(
+  status?: DocumentIngestionStatus,
+): DocumentIngestionEventType {
+  switch (status) {
+    case "chunked":
+      return "chunked";
+    case "embedded":
+      return "processing";
+    case "indexed":
+      return "indexed";
+    case "failed":
+      return "failed";
+    case "uploaded":
+    default:
+      return "queued";
+  }
 }
