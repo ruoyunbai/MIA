@@ -19,16 +19,17 @@ import {
   Document,
   DocumentChunk,
   DocumentIngestionStatus,
+  DocumentStatus,
   VectorIndex,
   Category,
   User,
 } from '../../entities';
 import { LlmClientFactory } from '../../llm/llm-client.factory';
 import type { ParsedDocument } from '../interfaces/parsed-document.interface';
-import {
-  DocumentChunkRequestConfig,
-} from '../documents.types';
+import { DocumentChunkRequestConfig } from '../documents.types';
 import { DocumentChunkerRegistry } from '../chunkers/document-chunker.registry';
+import { DocumentIngestionEventsService } from './document-ingestion-events.service';
+import type { DocumentIngestionEventType } from './document-ingestion-events.service';
 
 const DEFAULT_CHUNK_SIZE = 800;
 const DEFAULT_CHUNK_OVERLAP = 160;
@@ -50,7 +51,8 @@ type VectorizationSummary = {
   previewSearch?: PreviewSearchResult;
 };
 
-interface IngestParsedDocumentPayload extends DocumentChunkRequestConfig {
+export interface IngestParsedDocumentPayload
+  extends DocumentChunkRequestConfig {
   parsed: ParsedDocument;
   title?: string;
   categoryId?: number;
@@ -62,6 +64,24 @@ interface IngestParsedDocumentPayload extends DocumentChunkRequestConfig {
 
 type ChunkingOptions = DocumentChunkRequestConfig & {
   parsed?: ParsedDocument;
+  jobId?: string;
+};
+
+export interface PreparedDocumentIngestion {
+  documentId: number;
+  title: string;
+  parsed: ParsedDocument;
+  chunkOptions: DocumentChunkRequestConfig;
+  previewQuery?: string;
+}
+
+type IngestionWorkflowOptions = {
+  documentId: number;
+  title: string;
+  parsed?: ParsedDocument;
+  chunkOptions: DocumentChunkRequestConfig;
+  previewQuery?: string;
+  jobId?: string;
 };
 
 type PreviewSearchMatch = {
@@ -78,7 +98,7 @@ type PreviewSearchResult = {
 };
 
 class LangchainEmbeddingFunction implements EmbeddingFunction {
-  constructor(private readonly embeddings: EmbeddingsInterface) { }
+  constructor(private readonly embeddings: EmbeddingsInterface) {}
 
   async generate(texts: string[]) {
     return this.embeddings.embedDocuments(texts);
@@ -107,18 +127,31 @@ export class DocumentIngestionService {
     private readonly configService: ConfigService,
     private readonly llmClientFactory: LlmClientFactory,
     private readonly chunkerRegistry: DocumentChunkerRegistry,
-  ) { }
+    private readonly ingestionEvents: DocumentIngestionEventsService,
+  ) {}
 
   async ingestDocument(documentId: number) {
-    const chunks = await this.chunkDocument(documentId);
-    const embeddingResult = await this.vectorizeDocument(documentId, chunks);
-    return {
+    const document = await this.requireDocument(documentId);
+    return this.runIngestionWorkflow({
       documentId,
-      ...embeddingResult,
-    };
+      title: document.title,
+      chunkOptions: {},
+      previewQuery: this.pickPreviewQuery(
+        undefined,
+        undefined,
+        document.content ?? '',
+      ),
+    });
   }
 
   async ingestParsedDocument(payload: IngestParsedDocumentPayload) {
+    const prepared = await this.prepareDocumentIngestion(payload);
+    return this.finalizePreparedDocumentIngestion(prepared);
+  }
+
+  async prepareDocumentIngestion(
+    payload: IngestParsedDocumentPayload,
+  ): Promise<PreparedDocumentIngestion> {
     const content =
       payload.parsed.markdown?.trim() || payload.parsed.plainText?.trim();
     if (!content) {
@@ -141,34 +174,81 @@ export class DocumentIngestionService {
       metaInfo: Object.keys(mergedMeta).length ? mergedMeta : null,
       ingestionStatus: DocumentIngestionStatus.UPLOADED,
       ingestionError: null,
+      status: DocumentStatus.PROCESSING,
     };
     const document = this.documentsRepository.create(createPayload);
     const saved = await this.documentsRepository.save(document);
-    const documentId = saved.id;
-    const chunks = await this.chunkDocument(documentId, {
-      strategy: payload.chunkStrategy,
-      chunkSize: payload.chunkSize,
-      chunkOverlap: payload.chunkOverlap,
-      paragraphMinLength: payload.paragraphMinLength,
-      slidingWindowStep: payload.slidingWindowStep,
-      slidingWindowSize: payload.slidingWindowSize,
-      parsed: payload.parsed,
-    });
-    const previewQuery = this.pickPreviewQuery(
-      payload.previewQuery,
-      payload.parsed,
-      content,
-    );
-    const vectorization = await this.vectorizeDocument(
-      documentId,
-      chunks,
-      previewQuery,
-    );
     return {
-      documentId,
+      documentId: saved.id,
       title,
-      ...vectorization,
+      parsed: payload.parsed,
+      chunkOptions: this.buildChunkOptionsFromPayload(payload),
+      previewQuery: this.pickPreviewQuery(
+        payload.previewQuery,
+        payload.parsed,
+        content,
+      ),
     };
+  }
+
+  async finalizePreparedDocumentIngestion(
+    prepared: PreparedDocumentIngestion,
+    jobId?: string,
+  ) {
+    return this.runIngestionWorkflow({
+      documentId: prepared.documentId,
+      title: prepared.title,
+      parsed: prepared.parsed,
+      chunkOptions: prepared.chunkOptions,
+      previewQuery: prepared.previewQuery,
+      jobId,
+    });
+  }
+
+  async getDocumentIngestionStatus(documentId: number) {
+    const document = await this.requireDocument(documentId);
+    return {
+      documentId: document.id,
+      title: document.title,
+      status: document.status,
+      ingestionStatus: document.ingestionStatus,
+      ingestionError: document.ingestionError,
+      chunkedAt: document.chunkedAt,
+      embeddedAt: document.embeddedAt,
+      indexedAt: document.indexedAt,
+      updatedAt: document.updatedAt,
+    };
+  }
+
+  private async runIngestionWorkflow(options: IngestionWorkflowOptions) {
+    await this.markDocumentProcessing(options.documentId, options.jobId);
+    const chunkOptions: ChunkingOptions = {
+      ...options.chunkOptions,
+      parsed: options.parsed,
+      jobId: options.jobId,
+    };
+    try {
+      const chunks = await this.chunkDocument(options.documentId, chunkOptions);
+      const vectorization = await this.vectorizeDocument(
+        options.documentId,
+        chunks,
+        options.previewQuery,
+        options.jobId,
+      );
+      await this.markDocumentActive(options.documentId, options.jobId);
+      return {
+        documentId: options.documentId,
+        title: options.title,
+        ...vectorization,
+      };
+    } catch (error) {
+      await this.handleIngestionFailure(
+        options.documentId,
+        error,
+        options.jobId,
+      );
+      throw error;
+    }
   }
 
   async chunkDocument(documentId: number, options?: ChunkingOptions) {
@@ -245,6 +325,11 @@ export class DocumentIngestionService {
       chunkedAt: new Date(),
       ingestionError: null,
     });
+    this.emitIngestionEvent('chunked', documentId, {
+      jobId: options?.jobId,
+      status: DocumentStatus.PROCESSING,
+      ingestionStatus: DocumentIngestionStatus.CHUNKED,
+    });
 
     return savedChunks;
   }
@@ -253,6 +338,7 @@ export class DocumentIngestionService {
     documentId: number,
     chunks?: DocumentChunk[],
     previewQuery?: string,
+    jobId?: string,
   ): Promise<VectorizationSummary> {
     const document = await this.requireDocument(documentId);
     const targetChunks =
@@ -280,7 +366,9 @@ export class DocumentIngestionService {
       await this.ensureEmbeddings().embedDocuments(chunkContents);
 
     if (embeddings.length > 0) {
-      this.logger.log(`Generated ${embeddings.length} embeddings. Dimension of first vector: ${embeddings[0].length}`);
+      this.logger.log(
+        `Generated ${embeddings.length} embeddings. Dimension of first vector: ${embeddings[0].length}`,
+      );
     }
 
     const chromaIds = embeddings.map(() => randomUUID());
@@ -316,6 +404,11 @@ export class DocumentIngestionService {
       indexedAt: now,
       ingestionError: null,
     });
+    this.emitIngestionEvent('indexed', documentId, {
+      jobId,
+      status: DocumentStatus.PROCESSING,
+      ingestionStatus: DocumentIngestionStatus.INDEXED,
+    });
 
     const previewSearch = await this.buildPreviewSearch(previewQuery);
 
@@ -325,6 +418,71 @@ export class DocumentIngestionService {
       embeddingModel,
       previewSearch,
     };
+  }
+
+  private async markDocumentProcessing(documentId: number, jobId?: string) {
+    await this.documentsRepository.update(documentId, {
+      status: DocumentStatus.PROCESSING,
+      ingestionError: null,
+    });
+    this.emitIngestionEvent('processing', documentId, {
+      jobId,
+      status: DocumentStatus.PROCESSING,
+      ingestionStatus: DocumentIngestionStatus.UPLOADED,
+    });
+  }
+
+  private async markDocumentActive(documentId: number, jobId?: string) {
+    await this.documentsRepository.update(documentId, {
+      status: DocumentStatus.ACTIVE,
+      ingestionError: null,
+    });
+    this.emitIngestionEvent('completed', documentId, {
+      jobId,
+      status: DocumentStatus.ACTIVE,
+      ingestionStatus: DocumentIngestionStatus.INDEXED,
+    });
+  }
+
+  private async handleIngestionFailure(
+    documentId: number,
+    error: unknown,
+    jobId?: string,
+  ) {
+    const message = this.extractIngestionError(error);
+    await this.documentsRepository.update(documentId, {
+      status: DocumentStatus.FAILED,
+      ingestionStatus: DocumentIngestionStatus.FAILED,
+      ingestionError: message,
+    });
+    this.emitIngestionEvent('failed', documentId, {
+      jobId,
+      status: DocumentStatus.FAILED,
+      ingestionStatus: DocumentIngestionStatus.FAILED,
+      message,
+    });
+  }
+
+  private extractIngestionError(error: unknown) {
+    if (error instanceof Error) {
+      return error.message.slice(0, 500);
+    }
+    if (typeof error === 'string') {
+      return error.slice(0, 500);
+    }
+    return '文档入库失败';
+  }
+
+  private emitIngestionEvent(
+    type: DocumentIngestionEventType,
+    documentId: number,
+    payload: Omit<DocumentIngestionEventPayload, 'type' | 'documentId'>,
+  ) {
+    this.ingestionEvents.emit({
+      ...payload,
+      type,
+      documentId,
+    });
   }
 
   private async removeExistingChunks(documentId: number) {
@@ -487,6 +645,19 @@ export class DocumentIngestionService {
     return document.fileUrl ?? undefined;
   }
 
+  private buildChunkOptionsFromPayload(
+    payload: DocumentChunkRequestConfig,
+  ): DocumentChunkRequestConfig {
+    return {
+      chunkStrategy: payload.chunkStrategy,
+      chunkSize: payload.chunkSize,
+      chunkOverlap: payload.chunkOverlap,
+      paragraphMinLength: payload.paragraphMinLength,
+      slidingWindowStep: payload.slidingWindowStep,
+      slidingWindowSize: payload.slidingWindowSize,
+    };
+  }
+
   private resolveChunkerKey(strategy?: string) {
     if (strategy && this.chunkerRegistry.has(strategy)) {
       return strategy;
@@ -554,14 +725,14 @@ export class DocumentIngestionService {
 
   private pickPreviewQuery(
     preferred: string | undefined,
-    parsed: ParsedDocument,
-    fallbackContent: string,
+    parsed?: ParsedDocument,
+    fallbackContent?: string,
   ) {
     const trimmed = preferred?.trim();
     if (trimmed?.length) {
       return trimmed;
     }
-    const plain = parsed.plainText?.trim() || fallbackContent?.trim();
+    const plain = parsed?.plainText?.trim() || fallbackContent?.trim();
     if (!plain) {
       return undefined;
     }

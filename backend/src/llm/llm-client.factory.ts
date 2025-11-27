@@ -66,7 +66,7 @@ class CustomOpenAIEmbeddings extends Embeddings {
 export class LlmClientFactory {
   private readonly logger = new Logger(LlmClientFactory.name);
 
-  constructor(private readonly configService: ConfigService) { }
+  constructor(private readonly configService: ConfigService) {}
 
   createChatModel() {
     const config = this.resolveRuntimeConfig();
@@ -162,8 +162,8 @@ export class LlmClientFactory {
   private buildHeaders(apiKey?: string) {
     return apiKey
       ? {
-        Authorization: `Bearer ${apiKey}`,
-      }
+          Authorization: `Bearer ${apiKey}`,
+        }
       : undefined;
   }
 

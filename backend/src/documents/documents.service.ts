@@ -1,9 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, MessageEvent } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { DocumentsStorageService } from './services/documents-storage.service';
 import { DocumentsParsingService } from './services/documents-parsing.service';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
 import { DocumentIngestionService } from './services/document-ingestion.service';
 import { IngestUploadedDocumentDto } from './dto/ingest-uploaded-document.dto';
+import { IngestWebArticleDto } from './dto/ingest-web-article.dto';
+import { DocumentIngestionQueueService } from './services/document-ingestion-queue.service';
+import { DocumentIngestionEventsService } from './services/document-ingestion-events.service';
 import {
   detectDocumentType,
   DocumentFileType,
@@ -15,6 +19,8 @@ export class DocumentsService {
     private readonly storageService: DocumentsStorageService,
     private readonly parsingService: DocumentsParsingService,
     private readonly ingestionService: DocumentIngestionService,
+    private readonly ingestionQueue: DocumentIngestionQueueService,
+    private readonly ingestionEvents: DocumentIngestionEventsService,
   ) {}
 
   uploadDocument(file: UploadedDocumentFile, folder?: string) {
@@ -65,6 +71,44 @@ export class DocumentsService {
         mimeType: file.mimetype,
       },
     });
+  }
+
+  async ingestWebArticle(payload: IngestWebArticleDto) {
+    const normalizedUrl = payload.url.trim();
+    const parsed = await this.parsingService.parseWebArticle(normalizedUrl);
+    const prepared = await this.ingestionService.prepareDocumentIngestion({
+      parsed,
+      title: payload.title,
+      categoryId: payload.categoryId,
+      userId: payload.userId,
+      chunkStrategy: payload.chunkStrategy,
+      chunkSize: payload.chunkSize,
+      chunkOverlap: payload.chunkOverlap,
+      paragraphMinLength: payload.paragraphMinLength,
+      slidingWindowStep: payload.slidingWindowStep,
+      slidingWindowSize: payload.slidingWindowSize,
+      previewQuery: payload.previewQuery?.trim(),
+      metaInfo: {
+        ...parsed.metadata,
+        sourceUrl: normalizedUrl,
+        origin: 'web-article',
+      },
+    });
+    const job = this.ingestionQueue.enqueue(prepared);
+    return {
+      documentId: job.documentId,
+      jobId: job.jobId,
+      queuePosition: job.queuePosition,
+      status: job.status,
+    };
+  }
+
+  getDocumentIngestionStatus(documentId: number) {
+    return this.ingestionService.getDocumentIngestionStatus(documentId);
+  }
+
+  ingestionEventStream(documentId?: number): Observable<MessageEvent> {
+    return this.ingestionEvents.stream(documentId);
   }
 
   private async parseUploadedFile(file: UploadedDocumentFile) {

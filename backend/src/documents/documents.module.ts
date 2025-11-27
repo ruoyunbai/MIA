@@ -8,11 +8,13 @@ import { WordDocumentParserService } from './parsers/word-document-parser.servic
 import { DocumentsStorageService } from './services/documents-storage.service';
 import { DocumentsParsingService } from './services/documents-parsing.service';
 import { DocumentIngestionService } from './services/document-ingestion.service';
+import { DocumentIngestionEventsService } from './services/document-ingestion-events.service';
 import { DocumentChunkerRegistry } from './chunkers/document-chunker.registry';
 import { FixedLengthChunker } from './chunkers/fixed-length.chunker';
 import { ParagraphChunker } from './chunkers/paragraph.chunker';
 import { SectionChunker } from './chunkers/section.chunker';
 import { SlidingWindowChunker } from './chunkers/sliding-window.chunker';
+import { DocumentIngestionQueueService } from './services/document-ingestion-queue.service';
 import {
   Document,
   DocumentChunk,
@@ -42,6 +44,8 @@ import { LlmModule } from '../llm/llm.module';
     PdfDocumentParserService,
     WordDocumentParserService,
     DocumentIngestionService,
+    DocumentIngestionEventsService,
+    DocumentIngestionQueueService,
     DocumentChunkerRegistry,
     FixedLengthChunker,
     ParagraphChunker,
@@ -50,4 +54,4 @@ import { LlmModule } from '../llm/llm.module';
   ],
   exports: [DocumentsService, DocumentIngestionService],
 })
-export class DocumentsModule { }
+export class DocumentsModule {}

@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  DocumentChunker,
-  DocumentChunkInput,
-} from '../documents.types';
+import { DocumentChunker, DocumentChunkInput } from '../documents.types';
 
 const DEFAULT_PARAGRAPH_MIN_LENGTH = 200;
 
@@ -38,10 +35,7 @@ export class ParagraphChunker implements DocumentChunker {
     return merged.map((item) => item.trim()).filter(Boolean);
   }
 
-  private resolvePositiveNumber(
-    value: unknown,
-    fallback: number,
-  ) {
+  private resolvePositiveNumber(value: unknown, fallback: number) {
     const numeric = Number(value);
     if (Number.isFinite(numeric) && numeric > 0) {
       return numeric;

@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import {
-  DocumentChunker,
-  DocumentChunkInput,
-} from '../documents.types';
+import { DocumentChunker, DocumentChunkInput } from '../documents.types';
 import { ParagraphChunker } from './paragraph.chunker';
 
 const DEFAULT_SECTION_MIN_LENGTH = 200;
 
 @Injectable()
 export class SectionChunker implements DocumentChunker {
-  constructor(private readonly paragraphChunker: ParagraphChunker) { }
+  constructor(private readonly paragraphChunker: ParagraphChunker) {}
 
   async chunk(input: DocumentChunkInput): Promise<string[]> {
     const rawMarkdown =
@@ -86,10 +83,7 @@ export class SectionChunker implements DocumentChunker {
     });
   }
 
-  private resolvePositiveNumber(
-    value: unknown,
-    fallback: number,
-  ) {
+  private resolvePositiveNumber(value: unknown, fallback: number) {
     const numeric = Number(value);
     if (Number.isFinite(numeric) && numeric > 0) {
       return numeric;

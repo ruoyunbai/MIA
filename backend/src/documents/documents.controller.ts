@@ -2,20 +2,25 @@ import {
   Body,
   Controller,
   Get,
+  MessageEvent,
   Post,
   Query,
+  Sse,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
+import { Observable } from 'rxjs';
 import { DocumentsService } from './documents.service';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { GetDownloadUrlDto } from './dto/get-download-url.dto';
 import { ParseWebArticleDto } from './dto/parse-web-article.dto';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
 import { IngestUploadedDocumentDto } from './dto/ingest-uploaded-document.dto';
+import { IngestWebArticleDto } from './dto/ingest-web-article.dto';
+import { GetDocumentIngestionStatusDto } from './dto/get-document-ingestion-status.dto';
 import type { StorageEngine } from 'multer';
 
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
@@ -62,6 +67,29 @@ export class DocumentsController {
   @ApiOperation({ summary: '解析小店课堂文章为 Markdown/纯文本' })
   parseWebArticle(@Body() payload: ParseWebArticleDto) {
     return this.documentsService.parseWebArticle(payload.url);
+  }
+
+  @Post('ingest-web-article')
+  @ApiOperation({ summary: '解析并入库小店课堂文章' })
+  ingestWebArticle(@Body() payload: IngestWebArticleDto) {
+    return this.documentsService.ingestWebArticle(payload);
+  }
+
+  @Get('ingestion-status')
+  @ApiOperation({ summary: '查询文档入库状态' })
+  getIngestionStatus(@Query() query: GetDocumentIngestionStatusDto) {
+    return this.documentsService.getDocumentIngestionStatus(query.documentId);
+  }
+
+  @Sse('ingestion-events')
+  @ApiOperation({ summary: '订阅文档入库进度 (SSE)' })
+  ingestionEvents(
+    @Query('documentId') documentId?: string,
+  ): Observable<MessageEvent> {
+    const parsed = documentId ? Number(documentId) : undefined;
+    const normalized =
+      parsed !== undefined && Number.isFinite(parsed) ? parsed : undefined;
+    return this.documentsService.ingestionEventStream(normalized);
   }
 
   @Post('parse-pdf')

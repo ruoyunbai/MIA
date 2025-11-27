@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  DocumentChunker,
-  DocumentChunkStrategyType,
-} from '../documents.types';
+import { DocumentChunker, DocumentChunkStrategyType } from '../documents.types';
 import { FixedLengthChunker } from './fixed-length.chunker';
 import { ParagraphChunker } from './paragraph.chunker';
 import { SectionChunker } from './section.chunker';

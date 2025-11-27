@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  DocumentChunker,
-  DocumentChunkInput,
-} from '../documents.types';
+import { DocumentChunker, DocumentChunkInput } from '../documents.types';
 
 const DEFAULT_WINDOW_SIZE = 800;
 const DEFAULT_WINDOW_STEP = 200;
@@ -46,10 +43,7 @@ export class SlidingWindowChunker implements DocumentChunker {
     return chunks;
   }
 
-  private resolvePositiveNumber(
-    value: unknown,
-    fallback: number,
-  ) {
+  private resolvePositiveNumber(value: unknown, fallback: number) {
     const numeric = Number(value);
     if (Number.isFinite(numeric) && numeric > 0) {
       return numeric;
