@@ -43,17 +43,27 @@ request.interceptors.request.use(
 // 响应拦截器
 const handleResponse = (response: AxiosResponse<ApiResponse<unknown>>) => {
         // 对响应数据做点什么
-        const res: ApiResponse<unknown> = response.data;
+        const res = response.data as ApiResponse<unknown> | Record<string, unknown>;
 
         // 如果响应类型是 blob 或 arraybuffer (用于文件下载等)，直接返回 response
         if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
             return response;
         }
 
+        // 若后端未使用统一响应格式（没有 code 字段），直接返回原始数据
+        if (res && typeof res === 'object' && !('code' in res)) {
+            return res as unknown;
+        }
+
         // 业务状态码判断
         // 假设后端约定 code === 0 或 200 为成功
         // 请根据实际情况修改这里的判断逻辑
-        if (res.code !== 0 && res.code !== 200) {
+        const codeValue =
+            typeof res.code === 'number' ? res.code : Number(res.code);
+        const successCode =
+            codeValue === 0 ||
+            (Number.isFinite(codeValue) && codeValue >= 200 && codeValue < 300);
+        if (!successCode) {
             const errorMessage = res.message || '系统错误';
             notify.error(errorMessage);
             const error = new Error(errorMessage);

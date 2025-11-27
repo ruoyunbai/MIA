@@ -101,6 +101,7 @@ export class DocumentsService {
       jobId: job.jobId,
       queuePosition: job.queuePosition,
       status: job.status,
+      title: prepared.title,
     };
   }
 

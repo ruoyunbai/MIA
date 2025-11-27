@@ -99,8 +99,10 @@ export function KnowledgeFilterBar({
             onChange={(e) => onFilterStatusChange(e.target.value)}
           >
             <option value="all">全部状态</option>
-            <option value="active">生效中</option>
-            <option value="inactive">已失效</option>
+            <option value="active">作为助手参考</option>
+            <option value="inactive">不作为参考</option>
+            <option value="processing">处理中</option>
+            <option value="failed">入库失败</option>
           </select>
         </div>
       </div>

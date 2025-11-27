@@ -1,5 +1,5 @@
 import { useState, type ReactNode, type MouseEvent } from "react";
-import { Upload, FileText, Plus, AlertCircle, FolderTree } from "lucide-react";
+import { Upload, FileText, Plus, AlertCircle, FolderTree, Link2 } from "lucide-react";
 import { useKnowledgeBase } from "../hooks/useKnowledgeBase";
 import { KnowledgeFilterBar } from "./knowledge-base/FilterBar";
 import { KnowledgeDocumentTable } from "./knowledge-base/DocumentTable";
@@ -38,6 +38,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
     handleDocumentDialogOpenChange,
     inputMethod,
     setInputMethod,
+    isSubmittingDocument,
     newDoc,
     setNewDoc,
     newCategoryName,
@@ -72,11 +73,22 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       (doc) => doc.category === categoryName && doc.status === "active",
     ).length;
 
+  const requiresTitle = inputMethod !== "web";
   const canProceed =
-    newDoc.title &&
-    newDoc.category &&
-    newDoc.subCategory &&
-    (inputMethod === "pdf" ? Boolean(newDoc.content) : true);
+    Boolean(newDoc.category) &&
+    Boolean(newDoc.subCategory) &&
+    (requiresTitle ? Boolean(newDoc.title.trim()) : true) &&
+    (inputMethod === "pdf" ? Boolean(newDoc.content) : true) &&
+    (inputMethod === "web" ? Boolean(newDoc.url.trim()) : true);
+
+  const submitLabel =
+    inputMethod === "richtext"
+      ? "下一步"
+      : inputMethod === "pdf"
+        ? "保存"
+        : isSubmittingDocument
+          ? "解析中..."
+          : "开始解析";
 
   return (
     <div className={styles.container}>
@@ -135,7 +147,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
               <div key={category.id} className={styles.categoryStatCard}>
                 <h3>{category.name}</h3>
                 <p className={styles.categoryStatValue}>{activeDocumentCount(category.name)}</p>
-                <p>个生效文档</p>
+                <p>个参考文档</p>
               </div>
             ))}
           </div>
@@ -157,7 +169,7 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
       <Modal
         open={isAddDialogOpen}
         title="添加知识文档"
-        description="选择录入方式：富文本编辑或上传 PDF"
+        description="选择录入方式：富文本编辑、上传 PDF 或抓取网页文章"
         onClose={() => handleDocumentDialogOpenChange(false)}
         footer={
           <>
@@ -171,10 +183,12 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
             <button
               type="button"
               className={styles.buttonPrimary}
-              onClick={handleProceedToEditor}
-              disabled={!canProceed}
+              onClick={() => {
+                void handleProceedToEditor();
+              }}
+              disabled={!canProceed || isSubmittingDocument}
             >
-              {inputMethod === "richtext" ? "下一步" : "保存"}
+              {submitLabel}
             </button>
           </>
         }
@@ -197,6 +211,14 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
             >
               <Upload size={20} />
               <p>上传 PDF</p>
+            </button>
+            <button
+              type="button"
+              className={`${styles.radioOption} ${inputMethod === "web" ? styles.radioOptionActive : ""}`}
+              onClick={() => setInputMethod("web")}
+            >
+              <Link2 size={20} />
+              <p>抓取链接</p>
             </button>
           </div>
         </div>
@@ -246,6 +268,19 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
           </div>
         </div>
 
+        {inputMethod === "web" && (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>文章链接</label>
+            <input
+              className={styles.input}
+              placeholder="请输入小店课堂文章链接"
+              value={newDoc.url}
+              onChange={(e) => setNewDoc({ ...newDoc, url: e.target.value })}
+            />
+            <p className={styles.helperText}>暂仅支持 https://school.jinritemai.com/doudian/web/article/ 路径</p>
+          </div>
+        )}
+
         {inputMethod === "pdf" && (
           <div className={styles.formGroup}>
             <label className={styles.label}>上传 PDF 文件</label>
@@ -280,21 +315,21 @@ export function KnowledgeBase({ onOpenEditor }: KnowledgeBaseProps) {
               className={`${styles.radioOption} ${newDoc.status === "active" ? styles.radioOptionActive : ""}`}
               onClick={() => setNewDoc({ ...newDoc, status: "active" })}
             >
-              生效中
+              作为智能助手参考
             </button>
             <button
               type="button"
               className={`${styles.radioOption} ${newDoc.status === "inactive" ? styles.radioOptionActive : ""}`}
               onClick={() => setNewDoc({ ...newDoc, status: "inactive" })}
             >
-              已失效
+              不作为参考
             </button>
           </div>
           <div className={styles.statusInfo}>
             <AlertCircle size={16} />
             <p>
-              <strong>生效中</strong>：文档参与智能问答检索；
-              <strong>已失效</strong>：仅保留归档，不参与检索。
+              <strong>作为智能助手参考</strong>：文档会参与智能问答检索；
+              <strong>不作为参考</strong>：仅用于归档，不参与检索。
             </p>
           </div>
         </div>

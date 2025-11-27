@@ -35,11 +35,39 @@ export interface Document {
   title: string;
   category: string;
   subCategory: string;
-  status: 'active' | 'inactive';
+  status: DocumentStatus;
   uploadDate: Date;
   content: string;
-  fileType?: 'text' | 'pdf';
+  fileType?: 'text' | 'pdf' | 'web';
   fileUrl?: string;
+  sourceUrl?: string;
+  ingestion?: DocumentIngestionState;
+}
+
+export type DocumentStatus = 'active' | 'inactive' | 'processing' | 'failed';
+
+export type DocumentIngestionEventType =
+  | 'queued'
+  | 'processing'
+  | 'chunked'
+  | 'indexed'
+  | 'completed'
+  | 'failed';
+
+export type DocumentIngestionStatus =
+  | 'uploaded'
+  | 'chunked'
+  | 'embedded'
+  | 'indexed'
+  | 'failed';
+
+export interface DocumentIngestionState {
+  stage: DocumentIngestionEventType;
+  status: DocumentIngestionStatus;
+  message?: string;
+  jobId?: string;
+  queuePosition?: number;
+  updatedAt: Date;
 }
 
 export interface SubCategory {

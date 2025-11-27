@@ -93,6 +93,58 @@
   color: #dc2626;
 }
 
+.statusProcessing {
+  background: rgba(59, 130, 246, 0.16);
+  color: #2563eb;
+}
+
+.statusFailed {
+  background: rgba(248, 113, 113, 0.2);
+  color: #b91c1c;
+}
+
+.ingestionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ingestionMeta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.ingestionQueued {
+  background: rgba(14, 165, 233, 0.16);
+  color: #0e7490;
+}
+
+.ingestionProcessing {
+  background: rgba(59, 130, 246, 0.16);
+  color: #1d4ed8;
+}
+
+.ingestionChunked {
+  background: rgba(249, 115, 22, 0.16);
+  color: #c2410c;
+}
+
+.ingestionIndexed {
+  background: rgba(139, 92, 246, 0.16);
+  color: #7c3aed;
+}
+
+.ingestionCompleted {
+  background: rgba(16, 185, 129, 0.16);
+  color: #059669;
+}
+
+.ingestionFailed {
+  background: rgba(248, 113, 113, 0.18);
+  color: #dc2626;
+}
+
 .actions {
   display: flex;
   align-items: center;
@@ -116,4 +168,9 @@
 .iconButton:hover {
   background: rgba(148, 163, 184, 0.15);
   color: #0f172a;
+}
+
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }

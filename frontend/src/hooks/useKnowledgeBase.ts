@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useAppStore } from "../store/useAppStore";
 import { fetchCategories, createCategory as createCategoryApi, updateCategory as updateCategoryApi, deleteCategory as deleteCategoryApi } from "../api/categories";
 import notify from "../utils/message";
-import type {
-  Category,
-  Document,
-  SubCategory,
-} from "../store/types";
+import { ingestWebArticle, type DocumentIngestionEvent } from "../api/documents";
+import type { Category, Document, SubCategory } from "../store/types";
 import type { CategoryDto } from "../../../shared/api-contracts";
 
 interface EditorState {
@@ -27,7 +24,8 @@ type DraftDocument = {
   subCategory: string;
   content: string;
   status: "active" | "inactive";
-  fileType: "text" | "pdf";
+  fileType: "text" | "pdf" | "web";
+  url: string;
 };
 
 const emptyDoc: DraftDocument = {
@@ -37,6 +35,7 @@ const emptyDoc: DraftDocument = {
   content: "",
   status: "active",
   fileType: "text",
+  url: "",
 };
 
 export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
@@ -47,7 +46,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     setCategories,
     addDocument,
     updateDocument,
-    deleteDocument: removeDocument,
+    deleteDocument: removeDocumentFromStore,
   } = useAppStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,12 +63,19 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
   } | null>(null);
   const [selectedCategoryForSub, setSelectedCategoryForSub] =
     useState<Category | null>(null);
-  const [inputMethod, setInputMethod] = useState<"richtext" | "pdf">(
+  const [inputMethod, setInputMethod] = useState<"richtext" | "pdf" | "web">(
     "richtext",
   );
   const [newDoc, setNewDoc] = useState<DraftDocument>({ ...emptyDoc });
+  const [isSubmittingDocument, setIsSubmittingDocument] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newSubCategoryName, setNewSubCategoryName] = useState("");
+  const pendingEventsRef = useRef<Map<string, DocumentIngestionEvent>>(new Map());
+  const documentsRef = useRef<Document[]>(documents);
+
+  useEffect(() => {
+    documentsRef.current = documents;
+  }, [documents]);
   const refreshCategories = useCallback(async () => {
     try {
       const list = await fetchCategories();
@@ -82,6 +88,72 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
   useEffect(() => {
     void refreshCategories();
   }, [refreshCategories]);
+
+  const applyIngestionEvent = useCallback(
+    (payload: DocumentIngestionEvent) => {
+      updateDocument(String(payload.documentId), {
+        status: payload.status,
+        ingestion: {
+          stage: payload.type,
+          status: payload.ingestionStatus,
+          message: payload.message,
+          jobId: payload.jobId,
+          queuePosition: payload.queuePosition,
+          updatedAt: payload.timestamp ? new Date(payload.timestamp) : new Date(),
+        },
+      });
+    },
+    [updateDocument],
+  );
+
+  const applyPendingEventForDocument = useCallback(
+    (documentId: string) => {
+      const pending = pendingEventsRef.current.get(documentId);
+      if (!pending) return;
+      pendingEventsRef.current.delete(documentId);
+      applyIngestionEvent(pending);
+    },
+    [applyIngestionEvent],
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    const normalizedBase = baseUrl.endsWith("/")
+      ? baseUrl.slice(0, -1)
+      : baseUrl;
+    const eventSource = new EventSource(
+      `${normalizedBase}/documents/ingestion-events`,
+    );
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as DocumentIngestionEvent;
+        if (!payload?.documentId) {
+          return;
+        }
+        const docId = String(payload.documentId);
+        const exists = documentsRef.current.some((doc) => doc.id === docId);
+        if (!exists) {
+          pendingEventsRef.current.set(docId, payload);
+          return;
+        }
+        applyIngestionEvent(payload);
+      } catch (error) {
+        console.error("Failed to parse ingestion event", error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("Document ingestion event stream error", error);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [applyIngestionEvent]);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
@@ -117,6 +189,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     if (!open) {
       setNewDoc({ ...emptyDoc });
       setInputMethod("richtext");
+      setIsSubmittingDocument(false);
     }
   };
 
@@ -276,9 +349,91 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     }
   };
 
-  const handleProceedToEditor = () => {
-    if (!newDoc.title || !newDoc.category || !newDoc.subCategory) {
-      alert("请填写完整的文档信息");
+  const handleIngestWebDocument = async () => {
+    const url = newDoc.url.trim();
+    if (!url) {
+      alert("请填写需要抓取的链接");
+      return;
+    }
+    const normalizedTitle = newDoc.title.trim();
+    const docCategory = newDoc.category;
+    const docSubCategory = newDoc.subCategory;
+    setIsSubmittingDocument(true);
+    const now = new Date();
+    const placeholderId = `temp-${Date.now()}`;
+    const placeholder: Document = {
+      id: placeholderId,
+      title: normalizedTitle || "待解析文章",
+      category: docCategory,
+      subCategory: docSubCategory,
+      status: "processing",
+      uploadDate: now,
+      content: `来源链接：${url}`,
+      fileType: "web",
+      sourceUrl: url,
+      ingestion: {
+        stage: "queued",
+        status: "uploaded",
+        message: "正在提交解析任务...",
+        updatedAt: now,
+      },
+    };
+    addDocument(placeholder);
+    openDocumentDialog(false);
+    try {
+      const categoryId = categories.find((cat) => cat.name === docCategory)?.id;
+      const response = await ingestWebArticle(
+        {
+          url,
+          title: normalizedTitle || undefined,
+          categoryId,
+        },
+        {
+          timeout: 60000,
+        },
+      );
+      const document: Document = {
+        id: response.documentId.toString(),
+        title: normalizedTitle || response.title || placeholder.title,
+        category: docCategory,
+        subCategory: docSubCategory,
+        status: response.status || "processing",
+        uploadDate: now,
+        content: placeholder.content,
+        fileType: "web",
+        sourceUrl: url,
+        ingestion: {
+          stage: "queued",
+          status: "uploaded",
+          jobId: response.jobId,
+          queuePosition: response.queuePosition,
+          updatedAt: now,
+        },
+      };
+      removeDocumentFromStore(placeholderId);
+      addDocument(document);
+      applyPendingEventForDocument(document.id);
+      notify.success("链接已加入解析队列");
+    } catch (error) {
+      console.error("Failed to ingest web article", error);
+      removeDocumentFromStore(placeholderId);
+    } finally {
+      setIsSubmittingDocument(false);
+    }
+  };
+
+  const handleProceedToEditor = async () => {
+    if (!newDoc.category || !newDoc.subCategory) {
+      alert("请完善业务与场景分类");
+      return;
+    }
+    const trimmedTitle = newDoc.title.trim();
+    if (inputMethod !== "web" && !trimmedTitle) {
+      alert("请填写文档标题");
+      return;
+    }
+    if (inputMethod === "web" && !newDoc.url.trim()) {
+      alert("请填写需要抓取的链接");
       return;
     }
 
@@ -286,7 +441,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       openDocumentDialog(false);
       onOpenEditor({
         isOpen: true,
-        title: newDoc.title,
+        title: trimmedTitle,
         content: newDoc.content,
         category: newDoc.category,
         subCategory: newDoc.subCategory,
@@ -294,7 +449,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
         onSave: (content: string) => {
           const document: Document = {
             id: Date.now().toString(),
-            title: newDoc.title,
+            title: trimmedTitle,
             category: newDoc.category,
             subCategory: newDoc.subCategory,
             status: newDoc.status,
@@ -307,15 +462,18 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
           setInputMethod("richtext");
         },
       });
-    } else {
+    } else if (inputMethod === "pdf") {
       handleAddDocument();
+    } else if (inputMethod === "web") {
+      await handleIngestWebDocument();
     }
   };
 
   const handleAddDocument = () => {
+    const trimmedTitle = newDoc.title.trim();
     const document: Document = {
       id: Date.now().toString(),
-      title: newDoc.title,
+      title: trimmedTitle,
       category: newDoc.category,
       subCategory: newDoc.subCategory,
       status: newDoc.status,
@@ -338,14 +496,14 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
 
   const toggleStatus = (id: string) => {
     const doc = documents.find((d) => d.id === id);
-    if (doc) {
+    if (doc && (doc.status === "active" || doc.status === "inactive")) {
       updateDocument(id, { status: doc.status === "active" ? "inactive" : "active" });
     }
   };
 
   const deleteDocument = (id: string) => {
     if (confirm("确定要删除这个文档吗？")) {
-      removeDocument(id);
+      removeDocumentFromStore(id);
     }
   };
 
@@ -367,6 +525,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
     handleDocumentDialogOpenChange: openDocumentDialog,
     inputMethod,
     setInputMethod,
+    isSubmittingDocument,
     newDoc,
     setNewDoc,
     newCategoryName,

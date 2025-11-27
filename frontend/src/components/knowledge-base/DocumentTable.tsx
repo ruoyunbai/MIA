@@ -1,6 +1,64 @@
 import { FileText, Eye, Edit, Check, X, Trash2 } from "lucide-react";
 import styles from "./DocumentTable.module.css";
-import type { Document } from "../../store/types";
+import type { Document, DocumentIngestionEventType, DocumentStatus } from "../../store/types";
+
+const DOCUMENT_STATUS_META: Record<DocumentStatus, { label: string; className: string }> = {
+  active: { label: "作为助手参考", className: styles.statusActive },
+  inactive: { label: "不作为参考", className: styles.statusInactive },
+  processing: { label: "处理中", className: styles.statusProcessing },
+  failed: { label: "入库失败", className: styles.statusFailed },
+};
+
+const INGESTION_STAGE_META: Record<
+  DocumentIngestionEventType,
+  { label: string; className: string; description: string }
+> = {
+  queued: {
+    label: "排队中",
+    className: styles.ingestionQueued,
+    description: "已提交，等待入库",
+  },
+  processing: {
+    label: "解析中",
+    className: styles.ingestionProcessing,
+    description: "正在解析与切片",
+  },
+  chunked: {
+    label: "切片完成",
+    className: styles.ingestionChunked,
+    description: "切片完成，等待向量化",
+  },
+  indexed: {
+    label: "已写入索引",
+    className: styles.ingestionIndexed,
+    description: "索引完成，等待确认",
+  },
+  completed: {
+    label: "已完成",
+    className: styles.ingestionCompleted,
+    description: "入库已完成",
+  },
+  failed: {
+    label: "入库失败",
+    className: styles.ingestionFailed,
+    description: "入库失败，请重试",
+  },
+};
+
+const getIngestionMessage = (doc: Document) => {
+  const ingestion = doc.ingestion;
+  if (!ingestion) {
+    return "暂无入库记录";
+  }
+  if (ingestion.message) {
+    return ingestion.message;
+  }
+  if (ingestion.stage === "queued" && typeof ingestion.queuePosition === "number") {
+    return `队列位置：第 ${ingestion.queuePosition + 1} 位`;
+  }
+  const meta = INGESTION_STAGE_META[ingestion.stage];
+  return meta?.description ?? "等待更新";
+};
 
 interface KnowledgeDocumentTableProps {
   documents: Document[];
@@ -32,68 +90,82 @@ export function KnowledgeDocumentTable({
             <th className={styles.th}>文档标题</th>
             <th className={styles.th}>分类</th>
             <th className={styles.th}>上传时间</th>
+            <th className={styles.th}>入库进度</th>
             <th className={styles.th}>状态</th>
             <th className={styles.th}>操作</th>
           </tr>
         </thead>
         <tbody>
-          {documents.map((doc) => (
-            <tr key={doc.id}>
-              <td className={styles.td}>
-                <div className={styles.docInfo}>
-                  <div className={styles.docIcon}>
-                    <FileText size={16} />
+          {documents.map((doc) => {
+            const statusMeta = DOCUMENT_STATUS_META[doc.status] ?? DOCUMENT_STATUS_META.active;
+            const ingestionStage = doc.ingestion?.stage;
+            const ingestionMeta = ingestionStage ? INGESTION_STAGE_META[ingestionStage] : undefined;
+            const canToggleStatus = doc.status === "active" || doc.status === "inactive";
+            return (
+              <tr key={doc.id}>
+                <td className={styles.td}>
+                  <div className={styles.docInfo}>
+                    <div className={styles.docIcon}>
+                      <FileText size={16} />
+                    </div>
+                    <div className={styles.docMeta}>
+                      <p className={styles.docTitle}>{doc.title}</p>
+                      <p className={styles.docSnippet}>{doc.content}</p>
+                    </div>
                   </div>
-                  <div className={styles.docMeta}>
-                    <p className={styles.docTitle}>{doc.title}</p>
-                    <p className={styles.docSnippet}>{doc.content}</p>
+                </td>
+                <td className={styles.td}>
+                  <div>
+                    <p>{doc.category}</p>
+                    <p className={styles.docSnippet}>{doc.subCategory}</p>
                   </div>
-                </div>
-              </td>
-              <td className={styles.td}>
-                <div>
-                  <p>{doc.category}</p>
-                  <p className={styles.docSnippet}>{doc.subCategory}</p>
-                </div>
-              </td>
-              <td className={styles.td}>
-                {doc.uploadDate.toLocaleDateString("zh-CN")}
-              </td>
-              <td className={styles.td}>
-                <span
-                  className={`${styles.statusBadge} ${doc.status === "active" ? styles.statusActive : styles.statusInactive}`}
-                >
-                  {doc.status === "active" ? "生效中" : "已失效"}
-                </span>
-              </td>
-              <td className={styles.td}>
-                <div className={styles.actions}>
-                  <button type="button" className={styles.iconButton} title="查看">
-                    <Eye size={16} />
-                  </button>
-                  <button type="button" className={styles.iconButton} title="编辑">
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.iconButton}
-                    onClick={() => onToggleStatus(doc.id)}
-                    title="切换状态"
-                  >
-                    {doc.status === "active" ? <X size={16} color="#f97316" /> : <Check size={16} color="#16a34a" />}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.iconButton}
-                    onClick={() => onDelete(doc.id)}
-                    title="删除"
-                  >
-                    <Trash2 size={16} color="#dc2626" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
+                </td>
+                <td className={styles.td}>{doc.uploadDate.toLocaleDateString("zh-CN")}</td>
+                <td className={styles.td}>
+                  {ingestionMeta ? (
+                    <div className={styles.ingestionInfo}>
+                      <span className={`${styles.statusBadge} ${ingestionMeta.className}`}>
+                        {ingestionMeta.label}
+                      </span>
+                      <p className={styles.ingestionMeta}>{getIngestionMessage(doc)}</p>
+                    </div>
+                  ) : (
+                    <p className={styles.docSnippet}>暂无入库记录</p>
+                  )}
+                </td>
+                <td className={styles.td}>
+                  <span className={`${styles.statusBadge} ${statusMeta.className}`}>{statusMeta.label}</span>
+                </td>
+                <td className={styles.td}>
+                  <div className={styles.actions}>
+                    <button type="button" className={styles.iconButton} title="查看">
+                      <Eye size={16} />
+                    </button>
+                    <button type="button" className={styles.iconButton} title="编辑">
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      onClick={() => onToggleStatus(doc.id)}
+                      title={canToggleStatus ? "切换参考状态" : "处理中，暂不可切换"}
+                      disabled={!canToggleStatus}
+                    >
+                      {doc.status === "active" ? <X size={16} color="#f97316" /> : <Check size={16} color="#16a34a" />}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      onClick={() => onDelete(doc.id)}
+                      title="删除"
+                    >
+                      <Trash2 size={16} color="#dc2626" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
