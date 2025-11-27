@@ -8,6 +8,7 @@ import { IngestUploadedDocumentDto } from './dto/ingest-uploaded-document.dto';
 import { IngestWebArticleDto } from './dto/ingest-web-article.dto';
 import { DocumentIngestionQueueService } from './services/document-ingestion-queue.service';
 import { DocumentIngestionEventsService } from './services/document-ingestion-events.service';
+import { SearchDocumentsDto } from './dto/search-documents.dto';
 import {
   detectDocumentType,
   DocumentFileType,
@@ -109,6 +110,13 @@ export class DocumentsService {
 
   ingestionEventStream(documentId?: number): Observable<MessageEvent> {
     return this.ingestionEvents.stream(documentId);
+  }
+
+  searchDocuments(payload: SearchDocumentsDto) {
+    return this.ingestionService.searchDocumentVectors(
+      payload.query,
+      payload.limit,
+    );
   }
 
   private async parseUploadedFile(file: UploadedDocumentFile) {

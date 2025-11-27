@@ -21,6 +21,7 @@ import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interf
 import { IngestUploadedDocumentDto } from './dto/ingest-uploaded-document.dto';
 import { IngestWebArticleDto } from './dto/ingest-web-article.dto';
 import { GetDocumentIngestionStatusDto } from './dto/get-document-ingestion-status.dto';
+import { SearchDocumentsDto } from './dto/search-documents.dto';
 import type { StorageEngine } from 'multer';
 
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
@@ -90,6 +91,12 @@ export class DocumentsController {
     const normalized =
       parsed !== undefined && Number.isFinite(parsed) ? parsed : undefined;
     return this.documentsService.ingestionEventStream(normalized);
+  }
+
+  @Post('search-preview')
+  @ApiOperation({ summary: '根据自然语言检索知识库' })
+  searchDocuments(@Body() payload: SearchDocumentsDto) {
+    return this.documentsService.searchDocuments(payload);
   }
 
   @Post('parse-pdf')

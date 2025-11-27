@@ -87,7 +87,7 @@ type IngestionWorkflowOptions = {
   jobId?: string;
 };
 
-type PreviewSearchMatch = {
+export type PreviewSearchMatch = {
   chunkId?: number;
   score: number;
   title?: string;
@@ -95,7 +95,7 @@ type PreviewSearchMatch = {
   metadata?: Record<string, unknown>;
 };
 
-type PreviewSearchResult = {
+export type PreviewSearchResult = {
   query: string;
   matches: PreviewSearchMatch[];
 };
@@ -206,6 +206,22 @@ export class DocumentIngestionService {
       previewQuery: prepared.previewQuery,
       jobId,
     });
+  }
+
+  async searchDocumentVectors(query: string, limit = 3) {
+    const normalized = query?.trim();
+    if (!normalized) {
+      throw new BadRequestException('请提供需要检索的文本');
+    }
+    const resolvedLimit = this.normalizeSearchLimit(limit);
+    const preview = await this.runPreviewSearch(normalized, resolvedLimit);
+    if (preview) {
+      return preview;
+    }
+    return {
+      query: normalized,
+      matches: [],
+    };
   }
 
   async getDocumentIngestionStatus(documentId: number) {
@@ -413,7 +429,7 @@ export class DocumentIngestionService {
       ingestionStatus: DocumentIngestionStatus.INDEXED,
     });
 
-    const previewSearch = await this.buildPreviewSearch(previewQuery);
+    const previewSearch = await this.runPreviewSearch(previewQuery);
 
     return {
       chunkCount: targetChunks.length,
@@ -749,7 +765,7 @@ export class DocumentIngestionService {
     return snippet.slice(0, 60);
   }
 
-  private async buildPreviewSearch(query?: string) {
+  private async runPreviewSearch(query?: string, limit = 3) {
     if (!query) {
       return undefined;
     }
@@ -758,7 +774,7 @@ export class DocumentIngestionService {
       const embedding = await this.ensureEmbeddings().embedQuery(query);
       const result = await collection.query({
         queryEmbeddings: [embedding],
-        nResults: 3,
+        nResults: this.normalizeSearchLimit(limit),
       });
       const matches: PreviewSearchMatch[] = [];
       const [ids] = result.ids ?? [];
@@ -787,6 +803,13 @@ export class DocumentIngestionService {
       this.logger.warn('预检索失败', error as Error);
       return undefined;
     }
+  }
+
+  private normalizeSearchLimit(limit?: number) {
+    if (limit === undefined || Number.isNaN(Number(limit))) {
+      return 3;
+    }
+    return Math.min(10, Math.max(1, Math.floor(limit)));
   }
 
   private async resolveCategoryId(categoryId?: number) {
