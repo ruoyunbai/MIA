@@ -1,67 +1,197 @@
-import { useState, type FormEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from "react";
 import { X, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { login, register, requestVerificationCode } from "../api/user";
+import { setAuthToken } from "../utils/authToken";
 import styles from "./AuthModal.module.css";
+import type { User } from "../store/useStore";
+
+const VERIFICATION_COOLDOWN = 60;
+
+const createInitialFormData = () => ({
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+  name: "",
+  code: "",
+});
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogin: (user: { email: string; name: string }) => void;
+  onLogin: (user: User) => void;
 }
 
 export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState<"qrcode" | "phone" | "email">("email");
   const [showPassword, setShowPassword] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState(createInitialFormData);
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const pointerDownInsideRef = useRef(false);
+  const normalizedEmail = formData.email.trim().toLowerCase();
+  const trimmedVerificationCode = formData.code.trim();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    name: "",
-    code: "",
-  });
+  useEffect(() => {
+    if (resendCooldown <= 0 || typeof window === "undefined") return;
+    const timer = window.setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCooldown]);
+
+  const resetState = () => {
+    setFormData(createInitialFormData());
+    setShowPassword(false);
+    setIsRegister(false);
+    setIsCodeSent(false);
+    setResendCooldown(0);
+    setIsSendingCode(false);
+    setActiveTab("email");
+  };
+
+  const handleClose = () => {
+    resetState();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
-  const handleBackdropClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+  const isEmailBaseInvalid = !normalizedEmail || !formData.password;
+  const isRegisterInvalid =
+    !isCodeSent ||
+    trimmedVerificationCode.length < 6 ||
+    !formData.confirmPassword ||
+    formData.password !== formData.confirmPassword;
+  const isEmailSubmitDisabled =
+    isSubmitting || isEmailBaseInvalid || (isRegister && isRegisterInvalid);
+  const resendButtonLabel = isCodeSent ? "重新发送验证码" : "获取验证码";
+  const resendButtonText =
+    resendCooldown > 0 ? `${resendButtonLabel} (${resendCooldown}s)` : resendButtonLabel;
+
+  const handleBackdropPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!modalRef.current) return;
+    pointerDownInsideRef.current = modalRef.current.contains(event.target as Node);
+  };
+
+  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!modalRef.current) return;
+    const clickedInside = modalRef.current.contains(event.target as Node);
+    const startedInside = pointerDownInsideRef.current;
+    pointerDownInsideRef.current = false;
+
+    if (clickedInside || startedInside) {
+      return;
+    }
+
+    handleClose();
+  };
+
+  const handleSendCode = async () => {
+    if (!isRegister) {
+      toast.info("请切换到注册模式获取验证码");
+      return;
+    }
+    if (resendCooldown > 0 || isSendingCode) return;
+
+    if (!normalizedEmail) {
+      toast.error("请先输入邮箱");
+      return;
+    }
+
+    setIsSendingCode(true);
+    try {
+      await requestVerificationCode({
+        email: normalizedEmail,
+        name: formData.name || undefined,
+      });
+      toast.success("验证码已发送至邮箱，请查收");
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      setIsCodeSent(true);
+      setResendCooldown(VERIFICATION_COOLDOWN);
+    } catch (error) {
+      console.error("发送验证码失败", error);
+    } finally {
+      setIsSendingCode(false);
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (isRegister) {
-      const userName = formData.name || formData.email.split("@")[0] || "新用户";
-      const userEmail = formData.email || `user${Date.now()}@example.com`;
-      onLogin({ email: userEmail, name: userName });
-      onClose();
-    } else {
-      let userName = "";
-      let userEmail = "";
+    if (activeTab !== "email") {
+      toast.info("当前仅支持邮箱登录，请切换到邮箱登录方式");
+      return;
+    }
 
-      if (activeTab === "email") {
-        userName = formData.email.split("@")[0] || "用户";
-        userEmail = formData.email || "demo@example.com";
-      } else if (activeTab === "phone") {
-        userName = "用户" + (formData.phone.slice(-4) || "0000");
-        userEmail = formData.phone + "@phone.com";
-      } else {
-        userName = "扫码用户";
-        userEmail = "qrcode@example.com";
+    if (!normalizedEmail || !formData.password) {
+      toast.error("请输入邮箱和密码");
+      return;
+    }
+
+    if (isRegister && formData.password !== formData.confirmPassword) {
+      toast.error("两次输入的密码不一致");
+      return;
+    }
+
+    if (isRegister) {
+      if (trimmedVerificationCode.length < 6) {
+        toast.error("请输入 6 位验证码");
+        return;
+      }
+      if (!isCodeSent) {
+        toast.error("请先获取验证码");
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (isRegister) {
+        await register({
+          email: normalizedEmail,
+          password: formData.password,
+          name: formData.name || undefined,
+          verificationCode: trimmedVerificationCode,
+        });
+        toast.success("注册成功，正在登录");
       }
 
-      onLogin({ email: userEmail, name: userName });
-      onClose();
+      const authResult = await login({
+        email: normalizedEmail,
+        password: formData.password,
+      });
+      setAuthToken(authResult.token);
+      onLogin(authResult.user);
+      handleClose();
+    } catch (error) {
+      console.error("登录失败", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={styles.overlay} onClick={handleBackdropClick}>
-      <div className={styles.modal}>
-        <button onClick={onClose} className={styles.closeButton}>
+    <div
+      className={styles.overlay}
+      onPointerDown={handleBackdropPointerDown}
+      onClick={handleBackdropClick}
+    >
+      <div className={styles.modal} ref={modalRef}>
+        <button onClick={handleClose} className={styles.closeButton}>
           <X size={18} />
         </button>
 
@@ -99,7 +229,12 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
               <p className={styles.helperText} style={{ marginTop: "0.75rem" }}>
                 授权登录将会获取你在第三方平台的昵称、头像、手机号
               </p>
-              <button type="submit" className={styles.primaryButton} style={{ width: "100%", marginTop: "1rem" }}>
+              <button
+                type="submit"
+                className={styles.primaryButton}
+                style={{ width: "100%", marginTop: "1rem" }}
+                disabled={isSubmitting}
+              >
                 模拟扫码登录
               </button>
             </div>
@@ -129,7 +264,7 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
               </button>
             </div>
 
-            <button type="submit" className={styles.primaryButton}>
+            <button type="submit" className={styles.primaryButton} disabled={isSubmitting}>
               登录
             </button>
 
@@ -161,6 +296,31 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
               required
             />
 
+            {isRegister && (
+              <div className={styles.inputRow}>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="请输入邮箱验证码"
+                  value={formData.code}
+                  onChange={(e) =>
+                    setFormData({ ...formData, code: e.target.value.replace(/\s/g, "") })
+                  }
+                  maxLength={6}
+                  inputMode="numeric"
+                />
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={handleSendCode}
+                  disabled={isSendingCode || resendCooldown > 0 || !normalizedEmail}
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  {resendButtonText}
+                </button>
+              </div>
+            )}
+
             <div className={styles.passwordField}>
               <input
                 type={showPassword ? "text" : "password"}
@@ -188,11 +348,20 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
               />
             )}
 
-            <button type="submit" className={styles.primaryButton}>
+            <button type="submit" className={styles.primaryButton} disabled={isEmailSubmitDisabled}>
               {isRegister ? "注册并登录" : "登录"}
             </button>
 
-            <button type="button" className={styles.ghostButton} onClick={() => setIsRegister(!isRegister)}>
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setIsCodeSent(false);
+                setResendCooldown(0);
+                setFormData((prev) => ({ ...prev, code: "" }));
+              }}
+            >
               {isRegister ? "已有账号？去登录" : "没有账号？立即注册"}
             </button>
           </form>

@@ -42,6 +42,12 @@ export class User {
   @OneToMany(() => Document, (document) => document.user)
   documents: Document[];
 
+  @Column({ type: 'boolean', default: false, comment: '邮箱是否验证' })
+  emailVerified: boolean;
+
+  @Column({ type: 'datetime', nullable: true, comment: '邮箱验证完成时间' })
+  emailVerifiedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

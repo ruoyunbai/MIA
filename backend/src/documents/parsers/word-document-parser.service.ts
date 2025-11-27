@@ -108,7 +108,10 @@ export class WordDocumentParserService
     }
   }
 
-  private buildOutline(markdown: string, plainText: string): DocumentOutlineItem[] {
+  private buildOutline(
+    markdown: string,
+    plainText: string,
+  ): DocumentOutlineItem[] {
     const markdownOutline = buildOutlineFromMarkdown(markdown);
     if (markdownOutline.length) {
       return markdownOutline;

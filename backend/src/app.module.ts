@@ -14,8 +14,12 @@ import {
   Message,
   SearchLog,
 } from './entities';
+import { EmailVerification } from './email/entities/email-verification.entity';
 import { CategoriesModule } from './categories/categories.module';
 import { DocumentsModule } from './documents/documents.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -40,6 +44,7 @@ import { DocumentsModule } from './documents/documents.module';
           Conversation,
           Message,
           SearchLog,
+          EmailVerification,
         ],
         synchronize: true, // Set to false in production
       }),
@@ -48,6 +53,9 @@ import { DocumentsModule } from './documents/documents.module';
     LlmModule,
     CategoriesModule,
     DocumentsModule,
+    UsersModule,
+    AuthModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

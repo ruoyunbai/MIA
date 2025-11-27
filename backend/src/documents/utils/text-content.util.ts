@@ -21,7 +21,10 @@ export function normalizeMarkdown(input: string) {
   if (!input) {
     return '';
   }
-  return input.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return input
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 export function plainTextToMarkdown(plainText: string) {

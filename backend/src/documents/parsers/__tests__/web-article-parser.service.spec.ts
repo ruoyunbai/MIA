@@ -62,7 +62,9 @@ describe('WebArticleParserService', () => {
   });
 
   it('retries with Playwright when 解析结果内容为空', async () => {
-    const originalTransform = (service as any).transformHtml.bind(service as any);
+    const originalTransform = (service as any).transformHtml.bind(
+      service as any,
+    );
     jest
       .spyOn<any>(service as any, 'transformHtml')
       .mockImplementationOnce(() => ({
@@ -91,7 +93,9 @@ describe('WebArticleParserService', () => {
   });
 
   it('retries with Playwright when发现占位图链接', async () => {
-    const originalTransform = (service as any).transformHtml.bind(service as any);
+    const originalTransform = (service as any).transformHtml.bind(
+      service as any,
+    );
     jest
       .spyOn<any>(service as any, 'transformHtml')
       .mockImplementationOnce(() => ({
@@ -113,7 +117,9 @@ describe('WebArticleParserService', () => {
     const renderSpy = jest
       .spyOn<any>(service as any, 'renderWithHeadlessBrowser')
       .mockResolvedValue(html);
-    await service.parse('https://school.jinritemai.com/doudian/web/article/sample');
+    await service.parse(
+      'https://school.jinritemai.com/doudian/web/article/sample',
+    );
     expect(renderSpy).toHaveBeenCalledTimes(1);
   });
 

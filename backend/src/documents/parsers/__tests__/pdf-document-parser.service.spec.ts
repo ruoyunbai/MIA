@@ -12,9 +12,7 @@ describe('PdfDocumentParserService', () => {
   const mockPdfParse = pdfParse as jest.MockedFunction<typeof pdfParse>;
 
   beforeAll(() => {
-    const buffer = readFileSync(
-      join(__dirname, 'fixtures', 'sample.pdf'),
-    );
+    const buffer = readFileSync(join(__dirname, 'fixtures', 'sample.pdf'));
     sampleFile = {
       fieldname: 'file',
       originalname: 'sample.pdf',
@@ -38,9 +36,7 @@ describe('PdfDocumentParserService', () => {
   });
 
   it('parses pdf buffer into markdown/plain text', async () => {
-    jest
-      .spyOn(service as any, 'extractOutlineFromPdf')
-      .mockResolvedValue(null);
+    jest.spyOn(service as any, 'extractOutlineFromPdf').mockResolvedValue(null);
     const result = await service.parse(sampleFile);
     expect(result.plainText).toContain('Sample PDF Content');
     expect(result.markdown).toContain('Sample PDF Content');
@@ -49,9 +45,7 @@ describe('PdfDocumentParserService', () => {
   });
 
   it('falls back to decoded filename when originalname is latin1 encoded', async () => {
-    jest
-      .spyOn(service as any, 'extractOutlineFromPdf')
-      .mockResolvedValue(null);
+    jest.spyOn(service as any, 'extractOutlineFromPdf').mockResolvedValue(null);
     const corrupted = Buffer.from(
       '基于深度学习的视频插帧研究进展.pdf',
       'utf8',

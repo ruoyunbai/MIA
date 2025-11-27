@@ -5,6 +5,7 @@ import axios, {
     type AxiosResponse
 } from 'axios';
 import { toast } from 'sonner';
+import { getAuthToken, clearAuthToken, AUTH_LOGOUT_EVENT } from './authToken';
 
 // 定义通用的后端响应结构
 // 注意：这里需要根据实际后端接口返回的格式进行修改
@@ -28,13 +29,13 @@ const request: AxiosInstance = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        // 在发送请求之前做些什么
-
-        // 示例：从 localStorage 获取 token 并添加到 headers
-        // const token = localStorage.getItem('token');
-        // if (token) {
-        //   config.headers.Authorization = `Bearer ${token}`;
-        // }
+        const token = getAuthToken();
+        if (token) {
+            config.headers = {
+                ...config.headers,
+                Authorization: `Bearer ${token}`,
+            };
+        }
 
         return config;
     },
@@ -94,7 +95,10 @@ request.interceptors.response.use(
                     break;
                 case 401:
                     message = '未授权，请重新登录 (401)';
-                    // 这里可以触发登出逻辑
+                    clearAuthToken();
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new Event(AUTH_LOGOUT_EVENT));
+                    }
                     break;
                 case 403:
                     message = '拒绝访问 (403)';

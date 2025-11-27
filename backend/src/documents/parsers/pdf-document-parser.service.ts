@@ -73,7 +73,9 @@ export class PdfDocumentParserService
       };
     } catch (error) {
       this.logger.error('解析 PDF 失败', error);
-      throw new InternalServerErrorException('PDF 解析失败，请确认文件是否损坏');
+      throw new InternalServerErrorException(
+        'PDF 解析失败，请确认文件是否损坏',
+      );
     }
   }
 
@@ -81,8 +83,7 @@ export class PdfDocumentParserService
     try {
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
       pdfjs.GlobalWorkerOptions.workerSrc ||= PDF_WORKER_SRC;
-      const pdf = await pdfjs
-        .getDocument({ data: new Uint8Array(buffer) })
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) })
         .promise;
       const outline = await pdf.getOutline();
       if (!outline?.length) {

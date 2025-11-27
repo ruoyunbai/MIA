@@ -67,13 +67,15 @@ export class WebArticleParserService implements DocumentParser<string> {
     try {
       const initialResult = this.transformHtml(html, normalizedUrl);
       if (this.shouldRetryWithHeadless(initialResult)) {
-        const renderedHtml = await this.renderWithHeadlessBrowser(normalizedUrl);
+        const renderedHtml =
+          await this.renderWithHeadlessBrowser(normalizedUrl);
         return this.transformHtml(renderedHtml, normalizedUrl);
       }
       return initialResult;
     } catch (error) {
       if (this.shouldFallbackToHeadless(error)) {
-        const renderedHtml = await this.renderWithHeadlessBrowser(normalizedUrl);
+        const renderedHtml =
+          await this.renderWithHeadlessBrowser(normalizedUrl);
         return this.transformHtml(renderedHtml, normalizedUrl);
       }
       throw error;
@@ -125,7 +127,10 @@ export class WebArticleParserService implements DocumentParser<string> {
       lowerCaseTags: true,
       recognizeSelfClosing: true,
     });
-    this.removeNodes(document, new Set(['script', 'style', 'noscript', 'iframe']));
+    this.removeNodes(
+      document,
+      new Set(['script', 'style', 'noscript', 'iframe']),
+    );
 
     const title = this.extractTitle(document);
     const articleRoot = this.pickArticleRoot(document);
@@ -170,7 +175,7 @@ export class WebArticleParserService implements DocumentParser<string> {
           continue;
         }
         if (this.hasChildren(child)) {
-          queue.push(child as ParentNode);
+          queue.push(child);
         }
       }
     }
@@ -252,7 +257,8 @@ export class WebArticleParserService implements DocumentParser<string> {
 
     if (!bestNode) {
       const fallback = DomUtils.findAll(
-        (node) => this.isElement(node) && ['div', 'section'].includes(node.name),
+        (node) =>
+          this.isElement(node) && ['div', 'section'].includes(node.name),
         document.children,
       ).sort((a, b) => this.nodeTextLength(b) - this.nodeTextLength(a));
       bestNode = fallback[0] ?? null;
@@ -271,7 +277,8 @@ export class WebArticleParserService implements DocumentParser<string> {
       return null;
     }
     const firstContent = (docSdk.children || []).find(
-      (child): child is Element => this.isElement(child) && child.name === 'div',
+      (child): child is Element =>
+        this.isElement(child) && child.name === 'div',
     );
     if (firstContent && this.nodeTextLength(firstContent) > 100) {
       return firstContent;
@@ -380,7 +387,8 @@ export class WebArticleParserService implements DocumentParser<string> {
       return;
     }
     const href =
-      node.attribs?.['data-href'] ?? this.extractHrefFromClass(classList.join(' '));
+      node.attribs?.['data-href'] ??
+      this.extractHrefFromClass(classList.join(' '));
     if (!href) {
       return;
     }
@@ -412,7 +420,8 @@ export class WebArticleParserService implements DocumentParser<string> {
         node.nodeName === 'MD-TABLE' &&
         typeof node.getAttribute === 'function' &&
         Boolean(node.getAttribute('data-md-content')),
-      replacement: (_content, node) => node.getAttribute('data-md-content') ?? '',
+      replacement: (_content, node) =>
+        node.getAttribute('data-md-content') ?? '',
     });
   }
 
@@ -450,8 +459,8 @@ export class WebArticleParserService implements DocumentParser<string> {
     const html = (cell.children ?? [])
       .map((child) =>
         this.isElement(child)
-          ? DomUtils.getOuterHTML(child) ?? ''
-          : this.normalizeWhitespace('data' in child ? child.data ?? '' : ''),
+          ? (DomUtils.getOuterHTML(child) ?? '')
+          : this.normalizeWhitespace('data' in child ? (child.data ?? '') : ''),
       )
       .join('');
     const content = html
@@ -464,16 +473,21 @@ export class WebArticleParserService implements DocumentParser<string> {
     if (!content) {
       return ' ';
     }
-    return content
-      .replace(/\r/g, '')
-      .replace(/\n{2,}/g, '\n\n')
-      .replace(/\n/g, '<br>')
-      .replace(/\|/g, '\\|')
-      .trim() || ' ';
+    return (
+      content
+        .replace(/\r/g, '')
+        .replace(/\n{2,}/g, '\n\n')
+        .replace(/\n/g, '<br>')
+        .replace(/\|/g, '\\|')
+        .trim() || ' '
+    );
   }
 
   private normalizeWhitespace(text: string) {
-    return decode(text).replace(/\u200b+/g, ' ').replace(/\s+/g, ' ').trim();
+    return decode(text)
+      .replace(/\u200b+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private slugify(text: string) {
@@ -506,9 +520,10 @@ export class WebArticleParserService implements DocumentParser<string> {
       !result.plainText || result.plainText.replace(/\s+/g, '').length < 50;
     const missingTitle =
       !result.metadata.title || result.metadata.title === '未命名文章';
-    const hasPlaceholderImage = /lf3-static\.bytednsdoc\.com\/obj\/eden-cn\/upinulojnuvpe\/eschool|place\.jpe?g/i.test(
-      result.markdown,
-    );
+    const hasPlaceholderImage =
+      /lf3-static\.bytednsdoc\.com\/obj\/eden-cn\/upinulojnuvpe\/eschool|place\.jpe?g/i.test(
+        result.markdown,
+      );
     return (isMeaningless && missingTitle) || hasPlaceholderImage;
   }
 
@@ -523,7 +538,9 @@ export class WebArticleParserService implements DocumentParser<string> {
   private async renderWithHeadlessBrowser(url: string) {
     let browser: Browser | null = null;
     try {
-      const playwright = (await import('playwright')) as typeof import('playwright');
+      const playwright = (await import(
+        'playwright'
+      )) as typeof import('playwright');
       browser = await playwright.chromium.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -537,9 +554,9 @@ export class WebArticleParserService implements DocumentParser<string> {
       });
       await page.waitForTimeout(1500);
       await this.waitForArticleSelectors(page);
-      await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() =>
-        undefined,
-      );
+      await page
+        .waitForLoadState('networkidle', { timeout: 5000 })
+        .catch(() => undefined);
       await this.ensureDocImagesLoaded(page);
       const content = await page.content();
       return content;
@@ -593,7 +610,8 @@ export class WebArticleParserService implements DocumentParser<string> {
       if (hasPlaceholder) {
         await page.waitForFunction(
           (markers: string[]) => {
-            const container = document.querySelector('#doc-sdk') ?? document.body;
+            const container =
+              document.querySelector('#doc-sdk') ?? document.body;
             if (!container) {
               return false;
             }
@@ -672,7 +690,9 @@ export class WebArticleParserService implements DocumentParser<string> {
   private isPlaceholderImage(src: string) {
     return (
       /place\.jpe?g/i.test(src) ||
-      src.includes('lf3-static.bytednsdoc.com/obj/eden-cn/upinulojnuvpe/eschool')
+      src.includes(
+        'lf3-static.bytednsdoc.com/obj/eden-cn/upinulojnuvpe/eschool',
+      )
     );
   }
 
@@ -764,11 +784,13 @@ export class WebArticleParserService implements DocumentParser<string> {
     }
   }
 
-  private getParentElement(node?: Element | ParentNode | null): Element | undefined {
+  private getParentElement(
+    node?: Element | ParentNode | null,
+  ): Element | undefined {
     if (!node || typeof node !== 'object') {
       return undefined;
     }
-    const parent = (node as ParentNode).parent;
+    const parent = node.parent;
     return parent && this.isElement(parent as unknown as Element)
       ? (parent as unknown as Element)
       : undefined;
@@ -803,7 +825,11 @@ export class WebArticleParserService implements DocumentParser<string> {
   private isInFullscreenWidget(node: Element) {
     let current: Element | undefined = node;
     while (current) {
-      if (this.getClassList(current).some((cls) => cls.includes('ace-table-fullscreen'))) {
+      if (
+        this.getClassList(current).some((cls) =>
+          cls.includes('ace-table-fullscreen'),
+        )
+      ) {
         return true;
       }
       current = this.getParentElement(current);
@@ -853,7 +879,7 @@ export class WebArticleParserService implements DocumentParser<string> {
     }
     node.children.forEach((child) => {
       if (this.isElement(child) || this.isText(child)) {
-        (child as Element | Text).parent = node;
+        child.parent = node;
       }
     });
   }

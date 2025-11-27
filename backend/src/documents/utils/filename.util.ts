@@ -16,7 +16,11 @@ export function normalizeUploadedFilename(filename?: string) {
   }
   const base = stripExtension(trimmed);
   const normalizedBase = normalizeCandidate(base);
-  if (normalizedBase && isReadableTitle(normalizedBase) && !looksEncoded(base)) {
+  if (
+    normalizedBase &&
+    isReadableTitle(normalizedBase) &&
+    !looksEncoded(base)
+  ) {
     return normalizedBase;
   }
   const candidates = buildCandidates(trimmed);

@@ -2,8 +2,13 @@ import { create } from 'zustand';
 
 // --- User Types ---
 export interface User {
+    id: number;
     email: string;
     name: string;
+    avatarUrl?: string | null;
+    emailVerified: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 // --- Chat Types ---
