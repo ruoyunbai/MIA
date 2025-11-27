@@ -19,7 +19,10 @@ export class CategoriesService {
   ) {}
 
   async create(userId: number, createCategoryDto: CreateCategoryDto) {
-    const parent = await this.getParentCategory(userId, createCategoryDto.parentId);
+    const parent = await this.getParentCategory(
+      userId,
+      createCategoryDto.parentId,
+    );
 
     const level = this.calculateLevel(parent);
     this.ensureLevel(level);
@@ -70,7 +73,10 @@ export class CategoriesService {
       throw new BadRequestException('不能将自己设为父分类');
     }
 
-    const parent = await this.getParentCategory(userId, nextParentId ?? undefined);
+    const parent = await this.getParentCategory(
+      userId,
+      nextParentId ?? undefined,
+    );
     this.ensureParentNotDescendant(parent, id);
 
     const level = this.calculateLevel(parent);

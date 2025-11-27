@@ -35,7 +35,7 @@ export class Document {
   @Column({ length: 255, comment: '文档标题' })
   title: string;
 
-  @Column({ type: 'text', nullable: true, comment: '文档原始内容' })
+  @Column({ type: 'longtext', nullable: true, comment: '文档原始内容' })
   content: string;
 
   @Column({ nullable: true, comment: '分类ID' })
@@ -82,7 +82,7 @@ export class Document {
   ingestionStatus: DocumentIngestionStatus;
 
   @Column({ type: 'text', nullable: true, comment: '入库失败原因' })
-  ingestionError: string;
+  ingestionError: string | null;
 
   @Column({ type: 'timestamp', nullable: true, comment: '完成切片时间' })
   chunkedAt: Date;

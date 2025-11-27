@@ -1,11 +1,21 @@
 import { request as httpsRequest } from 'node:https';
 import { request as httpRequest } from 'node:http';
-import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from '@langchain/openai';
-import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { Document, VectorStoreIndex } from 'llamaindex';
 import { Document as LangChainDocument } from '@langchain/core/documents';
+import type { EmbeddingsInterface } from '@langchain/core/embeddings';
+import {
+  ChromaClient,
+  type Collection,
+  type EmbeddingFunction,
+} from 'chromadb';
 import OpenAI from 'openai';
 import { LlmClientFactory } from './llm-client.factory';
 
@@ -14,7 +24,9 @@ export class LlmService {
   private readonly logger = new Logger(LlmService.name);
   private readonly llm: ChatOpenAI;
   private readonly openaiClient: OpenAI;
-  private vectorStore?: Chroma;
+  private vectorStore?: SimpleChromaVectorStore;
+  private embeddings?: EmbeddingsInterface;
+  private chromaClient?: ChromaClient;
 
   constructor(
     private readonly configService: ConfigService,
@@ -26,11 +38,22 @@ export class LlmService {
 
   private getVectorStore() {
     if (!this.vectorStore) {
-      const chromaUrl = this.configService.get<string>('CHROMA_DB_URL');
-      this.vectorStore = new Chroma(this.llmFactory.createEmbeddings(), {
-        collectionName: 'mia_collection',
-        url: chromaUrl,
-      });
+      const url = this.configService.get<string>('CHROMA_DB_URL');
+      if (!url) {
+        throw new InternalServerErrorException(
+          'CHROMA_DB_URL 未配置，无法连接向量数据库',
+        );
+      }
+      const collectionName =
+        this.configService.get<string>('LLM_CHROMA_COLLECTION') ||
+        'mia_collection';
+      this.embeddings = this.embeddings ?? this.llmFactory.createEmbeddings();
+      this.chromaClient = this.createChromaClient(url);
+      this.vectorStore = new SimpleChromaVectorStore(
+        this.chromaClient,
+        this.embeddings,
+        collectionName,
+      );
     }
     return this.vectorStore;
   }
@@ -178,10 +201,7 @@ export class LlmService {
       req.end();
     });
 
-    if (
-      responsePayload.statusCode < 200 ||
-      responsePayload.statusCode >= 300
-    ) {
+    if (responsePayload.statusCode < 200 || responsePayload.statusCode >= 300) {
       throw new Error(
         `Fetch failed with status ${responsePayload.statusCode}: ${responsePayload.body}`,
       );
@@ -212,5 +232,111 @@ export class LlmService {
     const document = new Document({ text });
     const index = await VectorStoreIndex.fromDocuments([document]);
     return index;
+  }
+
+  private createChromaClient(url: string) {
+    const parsed = new URL(url);
+    const ssl = parsed.protocol === 'https:';
+    const port = parsed.port ? Number(parsed.port) : ssl ? 443 : 8000;
+    const basePath =
+      parsed.pathname && parsed.pathname !== '/' ? parsed.pathname : undefined;
+    return new ChromaClient({
+      host: parsed.hostname,
+      port,
+      ssl,
+      ...(basePath ? { path: basePath } : {}),
+    });
+  }
+}
+
+class LangchainEmbeddingFunction implements EmbeddingFunction {
+  constructor(private readonly embeddings: EmbeddingsInterface) {}
+
+  async generate(texts: string[]) {
+    return this.embeddings.embedDocuments(texts);
+  }
+
+  async generateForQueries(texts: string[]) {
+    if (texts.length === 0) {
+      return [];
+    }
+    return this.embeddings.embedDocuments(texts);
+  }
+}
+
+class SimpleChromaVectorStore {
+  private collection?: Collection;
+
+  constructor(
+    private readonly client: ChromaClient,
+    private readonly embeddings: EmbeddingsInterface,
+    private readonly collectionName: string,
+  ) {}
+
+  private async getCollection() {
+    if (!this.collection) {
+      const embeddingFunction = new LangchainEmbeddingFunction(this.embeddings);
+      this.collection = await this.client.getOrCreateCollection({
+        name: this.collectionName,
+        embeddingFunction,
+        metadata: {
+          description: 'MIA LLM 向量集合',
+        },
+      });
+    }
+    return this.collection;
+  }
+
+  async addDocuments(documents: LangChainDocument[]) {
+    if (!documents.length) {
+      return [];
+    }
+    const collection = await this.getCollection();
+    const contents = documents.map((doc) => doc.pageContent);
+    const embeddings = await this.embeddings.embedDocuments(contents);
+    const ids = documents.map((doc) => {
+      if (typeof doc.metadata?.id === 'string') {
+        return doc.metadata.id;
+      }
+      return randomUUID();
+    });
+    await collection.upsert({
+      ids,
+      embeddings,
+      documents: contents,
+      metadatas: documents.map((doc) =>
+        doc.metadata && typeof doc.metadata === 'object'
+          ? { ...doc.metadata }
+          : {},
+      ),
+    });
+    return ids;
+  }
+
+  async similaritySearch(query: string, k: number) {
+    const collection = await this.getCollection();
+    const embedding = await this.embeddings.embedQuery(query);
+    const result = await collection.query({
+      queryEmbeddings: [embedding],
+      nResults: k,
+    });
+    const matches: LangChainDocument[] = [];
+    const [ids] = result.ids ?? [];
+    const [documents] = result.documents ?? [];
+    const [metadatas] = result.metadatas ?? [];
+    if (ids && documents && metadatas) {
+      for (let i = 0; i < ids.length; i += 1) {
+        matches.push(
+          new LangChainDocument({
+            pageContent: documents[i] ?? '',
+            metadata:
+              (metadatas[i] && typeof metadatas[i] === 'object'
+                ? (metadatas[i] as Record<string, unknown>)
+                : {}) ?? {},
+          }),
+        );
+      }
+    }
+    return matches;
   }
 }

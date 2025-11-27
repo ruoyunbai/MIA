@@ -34,9 +34,7 @@ describe('WebArticleParserService', () => {
   beforeEach(() => {
     service = new WebArticleParserService();
     internals = service as unknown as ParserInternals;
-    fetchSpy = jest
-      .spyOn(internals, 'fetchHtml')
-      .mockResolvedValue(html);
+    fetchSpy = jest.spyOn(internals, 'fetchHtml').mockResolvedValue(html);
   });
 
   it('parses article into markdown/plainText/outline', async () => {

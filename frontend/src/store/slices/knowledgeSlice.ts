@@ -10,8 +10,8 @@ export interface KnowledgeSlice {
   updateDocument: (id: string, updates: Partial<Document>) => void;
   deleteDocument: (id: string) => void;
   addCategory: (category: Category) => void;
-  updateCategory: (id: string, updates: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  updateCategory: (id: number, updates: Partial<Category>) => void;
+  deleteCategory: (id: number) => void;
 }
 
 export const createKnowledgeSlice: StateCreator<KnowledgeSlice> = (set) => ({

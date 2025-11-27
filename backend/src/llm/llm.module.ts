@@ -8,6 +8,6 @@ import { LlmClientFactory } from './llm-client.factory';
   imports: [ConfigModule],
   controllers: [LlmController],
   providers: [LlmService, LlmClientFactory],
-  exports: [LlmService],
+  exports: [LlmService, LlmClientFactory],
 })
 export class LlmModule {}

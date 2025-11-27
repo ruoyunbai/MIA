@@ -59,9 +59,7 @@ export class CategoriesController {
     @Query() query: QueryCategoryDto,
   ): Promise<ApiResponseWrapper<CategoryResponseDto[]>> {
     const categories = await this.categoriesService.findAll(userId, query);
-    return buildSuccessResponse(
-      CategoryResponseDto.fromEntities(categories),
-    );
+    return buildSuccessResponse(CategoryResponseDto.fromEntities(categories));
   }
 
   @Get(':id')

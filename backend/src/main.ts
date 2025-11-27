@@ -8,12 +8,11 @@ import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const corsOrigins =
-    configService
-      .get<string>('FRONTEND_URL')
-      ?.split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean) ?? ['http://localhost:5173'];
+  const corsOrigins = configService
+    .get<string>('FRONTEND_URL')
+    ?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean) ?? ['http://localhost:5173'];
 
   app.enableCors({
     origin: corsOrigins,

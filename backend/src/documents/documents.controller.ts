@@ -15,6 +15,7 @@ import { UploadDocumentDto } from './dto/upload-document.dto';
 import { GetDownloadUrlDto } from './dto/get-download-url.dto';
 import { ParseWebArticleDto } from './dto/parse-web-article.dto';
 import { UploadedDocumentFile } from './interfaces/uploaded-document-file.interface';
+import { IngestUploadedDocumentDto } from './dto/ingest-uploaded-document.dto';
 import type { StorageEngine } from 'multer';
 
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
@@ -105,5 +106,33 @@ export class DocumentsController {
   )
   parseWord(@UploadedFile() file: UploadedDocumentFile) {
     return this.documentsService.parseWordDocument(file);
+  }
+
+  @Post('ingest-upload')
+  @ApiOperation({ summary: '上传文档并完成解析 + 切片 + 向量化' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: '商家活动指南' },
+        categoryId: { type: 'number', example: 1 },
+        userId: { type: 'number', example: 1001 },
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: MEMORY_STORAGE,
+      limits: { fileSize: MAX_UPLOAD_SIZE },
+    }),
+  )
+  ingestUploadedDocument(
+    @UploadedFile() file: UploadedDocumentFile,
+    @Body() payload: IngestUploadedDocumentDto,
+  ) {
+    return this.documentsService.ingestUploadedDocument(file, payload);
   }
 }
