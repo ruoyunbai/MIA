@@ -29,7 +29,10 @@ import type { ParsedDocument } from '../interfaces/parsed-document.interface';
 import { DocumentChunkRequestConfig } from '../documents.types';
 import { DocumentChunkerRegistry } from '../chunkers/document-chunker.registry';
 import { DocumentIngestionEventsService } from './document-ingestion-events.service';
-import type { DocumentIngestionEventType } from './document-ingestion-events.service';
+import type {
+  DocumentIngestionEventPayload,
+  DocumentIngestionEventType,
+} from './document-ingestion-events.service';
 
 const DEFAULT_CHUNK_SIZE = 800;
 const DEFAULT_CHUNK_OVERLAP = 160;
