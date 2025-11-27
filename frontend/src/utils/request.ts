@@ -4,8 +4,9 @@ import axios, {
     type InternalAxiosRequestConfig,
     type AxiosResponse
 } from 'axios';
-import { toast } from 'sonner';
 import { getAuthToken, clearAuthToken, AUTH_LOGOUT_EVENT } from './authToken';
+import notify from './message';
+import { markErrorHandled, extractServerMessage } from './error';
 
 // 定义通用的后端响应结构
 // 注意：这里需要根据实际后端接口返回的格式进行修改
@@ -60,16 +61,11 @@ const handleResponse = (response: AxiosResponse<ApiResponse<unknown>>) => {
         // 假设后端约定 code === 0 或 200 为成功
         // 请根据实际情况修改这里的判断逻辑
         if (res.code !== 0 && res.code !== 200) {
-            // 显示错误信息
-            toast.error(res.message || '系统错误');
-
-            // 处理特定的业务错误码
-            // if (res.code === 401) {
-            //   // token 过期，重定向到登录页
-            //   // window.location.href = '/login';
-            // }
-
-            return Promise.reject(new Error(res.message || 'Error'));
+            const errorMessage = res.message || '系统错误';
+            notify.error(errorMessage);
+            const error = new Error(errorMessage);
+            markErrorHandled(error);
+            return Promise.reject(error);
         }
 
         // 成功时直接返回 data 数据部分，简化调用方的代码
@@ -85,44 +81,44 @@ request.interceptors.response.use(
     (error: AxiosError) => {
         // 处理响应错误
         console.error('Response Error:', error);
-        let message = '未知错误';
+        let message = extractServerMessage(error.response?.data) || '未知错误';
 
         if (error.response) {
             const status = error.response.status;
             switch (status) {
                 case 400:
-                    message = '请求参数错误 (400)';
+                    message = message || '请求参数错误 (400)';
                     break;
                 case 401:
-                    message = '未授权，请重新登录 (401)';
+                    message = message || '未授权，请重新登录 (401)';
                     clearAuthToken();
                     if (typeof window !== 'undefined') {
                         window.dispatchEvent(new Event(AUTH_LOGOUT_EVENT));
                     }
                     break;
                 case 403:
-                    message = '拒绝访问 (403)';
+                    message = message || '拒绝访问 (403)';
                     break;
                 case 404:
-                    message = '请求的资源不存在 (404)';
+                    message = message || '请求的资源不存在 (404)';
                     break;
                 case 408:
-                    message = '请求超时 (408)';
+                    message = message || '请求超时 (408)';
                     break;
                 case 500:
-                    message = '服务器内部错误 (500)';
+                    message = message || '服务器内部错误 (500)';
                     break;
                 case 502:
-                    message = '网关错误 (502)';
+                    message = message || '网关错误 (502)';
                     break;
                 case 503:
-                    message = '服务不可用 (503)';
+                    message = message || '服务不可用 (503)';
                     break;
                 case 504:
-                    message = '网关超时 (504)';
+                    message = message || '网关超时 (504)';
                     break;
                 default:
-                    message = `连接错误 (${status})`;
+                    message = message || `连接错误 (${status})`;
             }
         } else if (error.request) {
             message = '网络连接异常，请检查网络设置';
@@ -130,8 +126,10 @@ request.interceptors.response.use(
             message = error.message;
         }
 
-        // 使用 sonner 显示错误提示
-        toast.error(message);
+        // 使用全局消息组件显示错误提示
+        notify.error(message);
+        markErrorHandled(error);
+        error.message = message;
 
         return Promise.reject(error);
     }

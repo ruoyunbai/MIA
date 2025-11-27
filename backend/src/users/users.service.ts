@@ -7,9 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../entities';
+import { EmailVerificationService } from '../email/email-verification.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { EmailVerificationService } from '../email/email-verification.service';
 import { RequestVerificationDto } from './dto/request-verification.dto';
 
 @Injectable()

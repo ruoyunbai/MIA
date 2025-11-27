@@ -1,8 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { buildSuccessResponse } from '../common/dto/api-response.dto';
 import { EmailService } from './email.service';
 import { SendEmailDto } from './dto/send-email.dto';
-import { buildSuccessResponse } from '../common/dto/api-response.dto';
 
 @ApiTags('Email')
 @Controller('email')

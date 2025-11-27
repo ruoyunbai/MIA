@@ -7,9 +7,10 @@ import {
   type PointerEvent,
 } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
 import { login, register, requestVerificationCode } from "../api/user";
 import { setAuthToken } from "../utils/authToken";
+import message from "../utils/message";
+import { isErrorHandled } from "../utils/error";
 import styles from "./AuthModal.module.css";
 import type { User } from "../store/useStore";
 
@@ -101,13 +102,13 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
 
   const handleSendCode = async () => {
     if (!isRegister) {
-      toast.info("请切换到注册模式获取验证码");
+      message.info("请切换到注册模式获取验证码");
       return;
     }
     if (resendCooldown > 0 || isSendingCode) return;
 
     if (!normalizedEmail) {
-      toast.error("请先输入邮箱");
+      message.error("请先输入邮箱");
       return;
     }
 
@@ -117,7 +118,7 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
         email: normalizedEmail,
         name: formData.name || undefined,
       });
-      toast.success("验证码已发送至邮箱，请查收");
+      message.success("验证码已发送至邮箱，请查收");
       setFormData((prev) => ({ ...prev, email: normalizedEmail }));
       setIsCodeSent(true);
       setResendCooldown(VERIFICATION_COOLDOWN);
@@ -132,27 +133,27 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
     e.preventDefault();
 
     if (activeTab !== "email") {
-      toast.info("当前仅支持邮箱登录，请切换到邮箱登录方式");
+      message.info("当前仅支持邮箱登录，请切换到邮箱登录方式");
       return;
     }
 
     if (!normalizedEmail || !formData.password) {
-      toast.error("请输入邮箱和密码");
+      message.error("请输入邮箱和密码");
       return;
     }
 
     if (isRegister && formData.password !== formData.confirmPassword) {
-      toast.error("两次输入的密码不一致");
+      message.error("两次输入的密码不一致");
       return;
     }
 
     if (isRegister) {
       if (trimmedVerificationCode.length < 6) {
-        toast.error("请输入 6 位验证码");
+        message.error("请输入 6 位验证码");
         return;
       }
       if (!isCodeSent) {
-        toast.error("请先获取验证码");
+        message.error("请先获取验证码");
         return;
       }
     }
@@ -167,7 +168,7 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
           name: formData.name || undefined,
           verificationCode: trimmedVerificationCode,
         });
-        toast.success("注册成功，正在登录");
+        message.success("注册成功，正在登录");
       }
 
       const authResult = await login({
@@ -178,6 +179,14 @@ export function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
       onLogin(authResult.user);
       handleClose();
     } catch (error) {
+      if (!isErrorHandled(error)) {
+        const fallbackMessage = isRegister
+          ? "注册失败，请稍后重试"
+          : "登录失败，请检查邮箱或密码";
+        const errorMessage =
+          error instanceof Error && error.message ? error.message : fallbackMessage;
+        message.error(errorMessage);
+      }
       console.error("登录失败", error);
     } finally {
       setIsSubmitting(false);
