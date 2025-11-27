@@ -3,7 +3,7 @@ import { Matches, MaxLength, IsString } from 'class-validator';
 import { IngestUploadedDocumentDto } from './ingest-uploaded-document.dto';
 
 const SUPPORTED_ARTICLE_URL =
-  /^https:\/\/school\.jinritemai\.com\/doudian\/web\/article\/\d+/i;
+  /^https:\/\/school\.jinritemai\.com\/doudian\/web\/article\/[A-Za-z0-9_-]+/i;
 
 export class IngestWebArticleDto extends IngestUploadedDocumentDto {
   @ApiProperty({
