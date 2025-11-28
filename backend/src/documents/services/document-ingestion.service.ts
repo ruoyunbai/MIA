@@ -218,13 +218,17 @@ export class DocumentIngestionService {
     });
   }
 
-  async searchDocumentVectors(query: string, limit = 3) {
+  async searchDocumentVectors(query: string, limit = 3, ownerId?: number) {
     const normalized = query?.trim();
     if (!normalized) {
       throw new BadRequestException('请提供需要检索的文本');
     }
     const resolvedLimit = this.normalizeSearchLimit(limit);
-    const preview = await this.runPreviewSearch(normalized, resolvedLimit);
+    const preview = await this.runPreviewSearch(
+      normalized,
+      resolvedLimit,
+      ownerId,
+    );
     if (preview) {
       return preview;
     }
@@ -512,7 +516,11 @@ export class DocumentIngestionService {
       ingestionStatus: DocumentIngestionStatus.INDEXED,
     });
 
-    const previewSearch = await this.runPreviewSearch(previewQuery);
+    const previewSearch = await this.runPreviewSearch(
+      previewQuery,
+      undefined,
+      document.userId ?? undefined,
+    );
 
     return {
       chunkCount: targetChunks.length,
@@ -852,7 +860,7 @@ export class DocumentIngestionService {
     return snippet.slice(0, 60);
   }
 
-  private async runPreviewSearch(query?: string, limit = 3) {
+  private async runPreviewSearch(query?: string, limit = 3, ownerId?: number) {
     if (!query) {
       return undefined;
     }
@@ -885,7 +893,33 @@ export class DocumentIngestionService {
           });
         }
       }
-      return { query, matches };
+      const filtered =
+        ownerId === undefined
+          ? matches
+          : matches.filter((match) => {
+              const metadataOwnerValue =
+                match.metadata && 'userId' in match.metadata
+                  ? match.metadata['userId']
+                  : undefined;
+              if (
+                metadataOwnerValue === null ||
+                metadataOwnerValue === undefined
+              ) {
+                return false;
+              }
+              if (
+                typeof metadataOwnerValue !== 'number' &&
+                typeof metadataOwnerValue !== 'string'
+              ) {
+                return false;
+              }
+              const metadataOwner = Number(metadataOwnerValue);
+              if (!Number.isFinite(metadataOwner)) {
+                return false;
+              }
+              return metadataOwner === ownerId;
+            });
+      return { query, matches: filtered };
     } catch (error) {
       this.logger.warn('预检索失败', error as Error);
       return undefined;

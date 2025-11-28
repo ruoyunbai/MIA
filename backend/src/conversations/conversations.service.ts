@@ -243,7 +243,10 @@ export class ConversationsService {
       query: normalizedQuery,
       status: 'evaluating',
     });
-    const decision = await this.shouldUseKnowledgeBase(normalizedQuery, history);
+    const decision = await this.shouldUseKnowledgeBase(
+      normalizedQuery,
+      history,
+    );
     callbacks?.onEvent?.('retrieval_decision', {
       query: normalizedQuery,
       decision: decision.useKnowledgeBase ? 'retrieve' : 'skip',
@@ -267,6 +270,7 @@ export class ConversationsService {
       references = await this.buildContextReferences(
         normalizedQuery,
         payload,
+        userId,
         callbacks,
       );
       this.logger.log(
@@ -416,7 +420,10 @@ export class ConversationsService {
       );
       return { useKnowledgeBase: true };
     } catch (error) {
-      this.logger.warn('retrieval gate failed, fallback to rag', error as Error);
+      this.logger.warn(
+        'retrieval gate failed, fallback to rag',
+        error as Error,
+      );
       return { useKnowledgeBase: true };
     }
   }
@@ -424,6 +431,7 @@ export class ConversationsService {
   private async buildContextReferences(
     query: string,
     payload: SendMessageDto,
+    userId: number,
     callbacks?: GenerationCallbacks,
   ): Promise<ConversationReferenceDto[]> {
     this.logger.log(
@@ -433,6 +441,7 @@ export class ConversationsService {
     const preview = await this.documentIngestionService.searchDocumentVectors(
       query,
       searchLimit,
+      userId,
     );
     const chunkIds = (preview.matches ?? [])
       .map((match) => match.chunkId)
@@ -445,7 +454,7 @@ export class ConversationsService {
     }
 
     const chunks = await this.chunksRepository.find({
-      where: { id: In(chunkIds) },
+      where: { id: In(chunkIds), document: { userId } },
       relations: ['document'],
     });
     const chunkMap = new Map<number, DocumentChunk>();
@@ -458,6 +467,9 @@ export class ConversationsService {
         }
         const chunk = chunkMap.get(match.chunkId);
         if (!chunk) {
+          return undefined;
+        }
+        if (!this.isDocumentAccessible(chunk.document, userId)) {
           return undefined;
         }
         if (
@@ -564,6 +576,13 @@ export class ConversationsService {
       const { internalId, ...rest } = reference;
       return rest;
     });
+  }
+
+  private isDocumentAccessible(document: Document | null, userId: number) {
+    if (!document) {
+      return false;
+    }
+    return document.userId === userId;
   }
 
   private async buildContextContent(
@@ -891,9 +910,7 @@ export class ConversationsService {
     }
   }
 
-  private normalizeEventData(
-    data: unknown,
-  ): string | Record<string, unknown> {
+  private normalizeEventData(data: unknown): string | Record<string, unknown> {
     if (data === undefined || data === null) {
       return '';
     }

@@ -132,7 +132,10 @@ export class DocumentsService {
   }
 
   async getDocument(documentId: number, userId: number) {
-    const document = await this.ingestionService.getDocument(documentId, userId);
+    const document = await this.ingestionService.getDocument(
+      documentId,
+      userId,
+    );
     return DocumentResponseDto.fromEntity(document);
   }
 
