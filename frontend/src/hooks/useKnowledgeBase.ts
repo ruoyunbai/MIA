@@ -46,6 +46,7 @@ const emptyDoc: DraftDocument = {
 
 export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
   const {
+    user,
     documents,
     categories,
     setDocuments,
@@ -490,6 +491,7 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       return;
     }
     const normalizedTitle = newDoc.title.trim();
+    const requestTitle = normalizedTitle || "";
     const docCategory = newDoc.category;
     const docSubCategory = newDoc.subCategory;
     const { categoryId, subCategoryId } = resolveSelectedCategoryIds(
@@ -526,8 +528,9 @@ export function useKnowledgeBase(onOpenEditor: OpenEditorFn) {
       const response = await ingestWebArticle(
         {
           url,
-          title: normalizedTitle || undefined,
+          title: requestTitle,
           categoryId: requestCategoryId,
+          userId: user?.id,
         },
         {
           timeout: 60000,

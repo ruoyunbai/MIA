@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, FileText, X } from 'lucide-react';
 import styles from './SourcePreview.module.css';
-
-interface Source {
-    title: string;
-    category: string;
-    snippet: string;
-    content?: string;
-}
+import type { SourceAttachment } from '../../../store/types';
 
 interface SourcePreviewProps {
-    selectedSource: Source;
-    sourceHistory: Source[];
+    selectedSource: SourceAttachment;
+    sourceHistory: SourceAttachment[];
     historyIndex: number;
     onClose: () => void;
     onBackward: () => void;
@@ -76,8 +70,12 @@ export function SourcePreview({
                         className={styles.docButton}
                     >
                         <div>
-                            <h3 className={styles.docTitle}>{selectedSource.title}</h3>
-                            <p className={styles.docCategory}>{selectedSource.category}</p>
+                            <h3 className={styles.docTitle}>
+                                {selectedSource.title ?? selectedSource.documentTitle}
+                            </h3>
+                            <p className={styles.docCategory}>
+                                {selectedSource.category ?? '知识库'}
+                            </p>
                         </div>
                     </button>
                     {sourceHistory.length > 0 && (
@@ -106,8 +104,12 @@ export function SourcePreview({
                                 >
                                     <FileText size={14} color="#94a3b8" />
                                     <div>
-                                        <p className={styles.historyItemTitle}>{source.title}</p>
-                                        <p className={styles.historyItemCategory}>{source.category}</p>
+                                        <p className={styles.historyItemTitle}>
+                                            {source.title ?? source.documentTitle}
+                                        </p>
+                                        <p className={styles.historyItemCategory}>
+                                            {source.category ?? '知识库'}
+                                        </p>
                                     </div>
                                 </button>
                             ))}

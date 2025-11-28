@@ -7,10 +7,10 @@ interface ChatSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     conversations: Conversation[];
-    activeConversationId: string | null;
-    onSelectConversation: (id: string) => void;
+    activeConversationId: number | null;
+    onSelectConversation: (id: number) => void;
     onNewChat: () => void;
-    onDeleteConversation: (id: string) => void;
+    onDeleteConversation: (id: number) => void;
 }
 
 export function ChatSidebar({

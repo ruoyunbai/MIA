@@ -8,26 +8,72 @@ export interface User {
   updatedAt: string;
 }
 
-export interface SourceAttachment {
-  title: string;
-  category: string;
+export interface ConversationReference {
+  referenceId?: string;
+  documentId?: number;
+  documentTitle: string;
+  chunkId?: number;
+  chunkIndex?: number;
   snippet: string;
   content?: string;
+  similarityScore?: number | null;
+  rerankScore?: number | null;
+  metadata?: Record<string, unknown> | null;
+  strategy?: string;
+}
+
+export interface SourceAttachment extends ConversationReference {
+  title?: string;
+  category?: string;
+}
+
+export interface RagEvent {
+  type: string;
+  payload?: unknown;
+  timestamp: number;
+}
+
+export interface RagCandidate extends SourceAttachment {
+  internalId?: string;
+}
+
+export interface RagTrace {
+  query?: string;
+  strategy?: string;
+  topK?: number;
+  rerank?: boolean;
+  rerankModel?: string;
+  discardedReason?: string;
+  model?: string;
+  decision?: 'retrieve' | 'skip';
+  decisionStatus?: 'evaluating' | 'decided';
+  decisionReason?: string;
+  knowledgeBaseUsed?: boolean;
+  candidates: RagCandidate[];
+  references: SourceAttachment[];
+  events: RagEvent[];
 }
 
 export interface Message {
-  id: string;
-  role: 'user' | 'assistant';
+  id: number | string;
+  conversationId: number;
+  role: 'user' | 'assistant' | 'system';
   content: string;
   sources?: SourceAttachment[];
-  timestamp: Date;
+  metadata?: Record<string, unknown> | null;
+  createdAt: Date;
+  isStreaming?: boolean;
+  ragTrace?: RagTrace;
 }
 
 export interface Conversation {
-  id: string;
+  id: number;
   title: string;
   messages: Message[];
   createdAt: Date;
+  updatedAt: Date;
+  isDeleted?: boolean;
+  isMessagesLoaded?: boolean;
 }
 
 export interface Document {

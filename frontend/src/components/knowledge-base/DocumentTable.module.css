@@ -174,3 +174,107 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+.previewOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 90;
+}
+
+.previewPanel {
+  width: min(900px, 100%);
+  max-height: 90vh;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 40px 80px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.previewHeader {
+  padding: 1.4rem 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.previewSubtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.previewTitle {
+  margin: 0.35rem 0 0;
+  font-size: 1.4rem;
+  color: #0f172a;
+}
+
+.previewMeta {
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.previewMeta span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+  color: #475467;
+}
+
+.previewCloseButton {
+  border: none;
+  background: rgba(15, 23, 42, 0.04);
+  color: #475467;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.previewCloseButton:hover {
+  background: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+.previewBody {
+  padding: 1.5rem;
+  background: #f8fafc;
+  overflow-y: auto;
+}
+
+.blockNoteViewer {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: white;
+  padding: 1rem;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+.blockNoteViewer :global(.bn-editor) {
+  min-height: 360px;
+}
+
+.blockNoteViewer :global(.bn-menu-bar) {
+  display: none;
+}

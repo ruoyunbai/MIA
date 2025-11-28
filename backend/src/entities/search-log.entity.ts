@@ -15,7 +15,7 @@ export class SearchLog {
   id: number;
 
   @Column({ nullable: true, comment: '用户ID' })
-  userId: number;
+  userId: number | null;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'userId' })
@@ -28,13 +28,13 @@ export class SearchLog {
   resultCount: number;
 
   @Column({ type: 'float', nullable: true, comment: '最高匹配分数' })
-  topScore: number;
+  topScore: number | null;
 
   @Column({ default: 0, comment: '耗时(ms)' })
   latency: number;
 
   @Column({ type: 'json', nullable: true, comment: '命中的文档ID列表' })
-  matchedDocIds: number[];
+  matchedDocIds: number[] | null;
 
   @Index()
   @CreateDateColumn()

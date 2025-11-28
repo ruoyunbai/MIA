@@ -20,6 +20,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
+import { ConversationsModule } from './conversations/conversations.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { EmailModule } from './email/email.module';
     UsersModule,
     AuthModule,
     EmailModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

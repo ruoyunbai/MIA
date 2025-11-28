@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { MessageSquare } from 'lucide-react';
-import { ChatMessage, type ChatMessageSource } from './ChatMessage';
+import { ChatMessage } from './ChatMessage';
 import styles from './ChatMessageList.module.css';
-import type { Message } from '../../../store/types';
+import type { Message, SourceAttachment } from '../../../store/types';
 
 interface ChatMessageListProps {
     messages: Message[];
     isTyping: boolean;
-    onSourceClick: (source: ChatMessageSource) => void;
+    onSourceClick: (source: SourceAttachment) => void;
     onSuggestionClick: (text: string) => void;
 }
 

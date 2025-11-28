@@ -1,16 +1,22 @@
 import { ExternalLink, FileText } from 'lucide-react';
+import { RagTracePanel } from './RagTracePanel';
 import styles from './ChatMessage.module.css';
-import type { Message } from '../../../store/types';
+import type { Message, SourceAttachment } from '../../../store/types';
 
 export type ChatMessageSource = NonNullable<Message['sources']>[number];
 
 interface ChatMessageProps {
     message: Message;
-    onSourceClick: (source: ChatMessageSource) => void;
+    onSourceClick: (source: SourceAttachment) => void;
 }
 
 export function ChatMessage({ message, onSourceClick }: ChatMessageProps) {
     const isUser = message.role === 'user';
+    const timestamp = message.createdAt;
+    const formattedTime = timestamp.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 
     const rowClass = `${styles.messageRow} ${isUser ? styles.messageRowUser : ''}`;
     const wrapperClass = [
@@ -39,18 +45,22 @@ export function ChatMessage({ message, onSourceClick }: ChatMessageProps) {
                                 onClick={() => onSourceClick(source)}
                             >
                                 <div className={styles.sourceTitleRow}>
-                                    <p className={styles.sourceTitle}>{source.title}</p>
+                                    <p className={styles.sourceTitle}>{source.title ?? source.documentTitle}</p>
                                     <ExternalLink size={14} color="#94a3b8" />
                                 </div>
-                                <p className={styles.sourceCategory}>{source.category}</p>
+                                <p className={styles.sourceCategory}>{source.category ?? '知识库'}</p>
                                 <p className={styles.sourceSnippet}>{source.snippet}</p>
                             </div>
                         ))}
                     </div>
                 )}
 
+                {!isUser && message.ragTrace && (
+                    <RagTracePanel trace={message.ragTrace} onSelectSource={onSourceClick} />
+                )}
+
                 <p className={styles.timestamp}>
-                    {message.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                    {formattedTime}
                 </p>
             </div>
         </div>

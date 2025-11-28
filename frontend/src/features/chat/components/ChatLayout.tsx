@@ -16,7 +16,7 @@ export interface ChatLayoutProps {
   input: string;
   isTyping: boolean;
   conversations: Conversation[];
-  activeConversationId: string | null;
+  activeConversationId: number | null;
   activeConversation?: Conversation;
   selectedSource: SourceAttachment | null;
   sourceHistory: SourceAttachment[];
@@ -24,8 +24,8 @@ export interface ChatLayoutProps {
   onInputChange: (value: string) => void;
   onSend: (text?: string) => void;
   onNewChat: () => void;
-  onSelectConversation: (id: string) => void;
-  onDeleteConversation: (id: string) => void;
+  onSelectConversation: (id: number) => void;
+  onDeleteConversation: (id: number) => void;
   onSourceClick: (source: SourceAttachment) => void;
   onBackward: () => void;
   onForward: () => void;

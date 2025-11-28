@@ -1,49 +1,43 @@
 import type { StateCreator } from 'zustand';
 import type { Conversation, Message } from '../types';
 
-const createConversationEntity = (): Conversation => ({
-  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  title: '新对话',
-  messages: [],
-  createdAt: new Date(),
-});
-
 export interface ChatSlice {
   conversations: Conversation[];
-  activeConversationId: string | null;
+  activeConversationId: number | null;
   setConversations: (conversations: Conversation[]) => void;
-  setActiveConversationId: (id: string | null) => void;
-  ensureConversation: () => Conversation;
+  setActiveConversationId: (id: number | null) => void;
   addConversation: (conversation: Conversation) => void;
-  updateConversation: (id: string, updates: Partial<Conversation>) => void;
-  addMessageToConversation: (conversationId: string, message: Message) => void;
-  deleteConversation: (id: string) => void;
+  updateConversation: (id: number, updates: Partial<Conversation>) => void;
+  setConversationMessages: (conversationId: number, messages: Message[]) => void;
+  addMessageToConversation: (conversationId: number, message: Message) => void;
+  updateMessageInConversation: (
+    conversationId: number,
+    messageId: Message['id'],
+    updater: (message: Message) => Message,
+  ) => void;
+  deleteConversation: (id: number) => void;
 }
 
-export const createChatSlice: StateCreator<ChatSlice> = (set, get) => ({
+export const createChatSlice: StateCreator<ChatSlice> = (set) => ({
   conversations: [],
   activeConversationId: null,
-  setConversations: (conversations) => set({ conversations }),
+  setConversations: (incoming) =>
+    set((state) => {
+      const existingMap = new Map(state.conversations.map((c) => [c.id, c]));
+      const next = incoming.map((conversation) => {
+        const current = existingMap.get(conversation.id);
+        if (!current) {
+          return conversation;
+        }
+        return {
+          ...conversation,
+          messages: current.messages,
+          isMessagesLoaded: current.isMessagesLoaded,
+        };
+      });
+      return { conversations: next };
+    }),
   setActiveConversationId: (id) => set({ activeConversationId: id }),
-  ensureConversation: () => {
-    const { conversations, activeConversationId } = get();
-    const existing =
-      conversations.find((c) => c.id === activeConversationId) ??
-      conversations[0];
-    if (existing) {
-      if (activeConversationId !== existing.id) {
-        set({ activeConversationId: existing.id });
-      }
-      return existing;
-    }
-
-    const fresh = createConversationEntity();
-    set((state) => ({
-      conversations: [fresh, ...state.conversations],
-      activeConversationId: fresh.id,
-    }));
-    return fresh;
-  },
   addConversation: (conversation) =>
     set((state) => ({
       conversations: [conversation, ...state.conversations],
@@ -55,6 +49,14 @@ export const createChatSlice: StateCreator<ChatSlice> = (set, get) => ({
         c.id === id ? { ...c, ...updates } : c,
       ),
     })),
+  setConversationMessages: (conversationId, messages) =>
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId
+          ? { ...c, messages, isMessagesLoaded: true }
+          : c,
+      ),
+    })),
   addMessageToConversation: (conversationId, message) =>
     set((state) => ({
       conversations: state.conversations.map((c) =>
@@ -62,6 +64,20 @@ export const createChatSlice: StateCreator<ChatSlice> = (set, get) => ({
           ? { ...c, messages: [...c.messages, message] }
           : c,
       ),
+    })),
+  updateMessageInConversation: (conversationId, messageId, updater) =>
+    set((state) => ({
+      conversations: state.conversations.map((c) => {
+        if (c.id !== conversationId) {
+          return c;
+        }
+        return {
+          ...c,
+          messages: c.messages.map((message) =>
+            message.id === messageId ? updater(message) : message,
+          ),
+        };
+      }),
     })),
   deleteConversation: (id) =>
     set((state) => {
