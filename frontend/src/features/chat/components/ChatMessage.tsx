@@ -25,12 +25,19 @@ export function ChatMessage({ message, onSourceClick }: ChatMessageProps) {
     ]
         .filter(Boolean)
         .join(' ');
-    const bubbleClass = `${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleAssistant}`;
+    const bubbleClasses = [
+        styles.bubble,
+        isUser ? styles.bubbleUser : styles.bubbleAssistant,
+        !isUser && message.isStreaming ? styles.bubbleAssistantStreaming : '',
+    ]
+        .filter(Boolean)
+        .join(' ');
+    const bubbleContent = message.content || (message.isStreaming ? '\u00a0' : '');
 
     return (
         <div className={rowClass}>
             <div className={wrapperClass}>
-                <div className={bubbleClass}>{message.content}</div>
+                <div className={bubbleClasses}>{bubbleContent}</div>
 
                 {message.sources && message.sources.length > 0 && (
                     <div className={styles.sources}>

@@ -55,15 +55,6 @@ export function ChatMessageList({ messages, isTyping, onSourceClick, onSuggestio
                 <ChatMessage key={message.id} message={message} onSourceClick={onSourceClick} />
             ))}
 
-            {isTyping && (
-                <div className={styles.typingWrapper}>
-                    <div className={styles.typingBubble}>
-                        <span className={styles.typingDot} />
-                        <span className={styles.typingDot} />
-                        <span className={styles.typingDot} />
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

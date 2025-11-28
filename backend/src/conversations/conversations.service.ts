@@ -19,6 +19,7 @@ import {
   Document,
   DocumentChunk,
   SearchLog,
+  DocumentStatus,
 } from '../entities';
 import {
   ConversationResponseDto,
@@ -454,7 +455,10 @@ export class ConversationsService {
     }
 
     const chunks = await this.chunksRepository.find({
-      where: { id: In(chunkIds), document: { userId } },
+      where: {
+        id: In(chunkIds),
+        document: { userId, status: DocumentStatus.ACTIVE },
+      },
       relations: ['document'],
     });
     const chunkMap = new Map<number, DocumentChunk>();
@@ -549,11 +553,11 @@ export class ConversationsService {
     );
     const reranked = rerankEnabled
       ? await this.rerankCandidates(
-          query,
-          candidates,
-          activeRerankModel,
-          callbacks,
-        )
+        query,
+        candidates,
+        activeRerankModel,
+        callbacks,
+      )
       : candidates;
     this.logger.log(
       `rerank finished query="${query}", candidateCount=${reranked.length}`,
